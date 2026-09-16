@@ -1,0 +1,14 @@
+# vscode
+.vscode 
+
+# npm
+node_modules
+
+# Compiled
+main.js
+
+# Exclude sourcemaps
+*.map
+
+# obsidian
+data.json

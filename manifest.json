@@ -1,0 +1,10 @@
+{
+	"id": "tag-sieve",
+	"name": "Tag Sieve",
+	"version": "1.0.0",
+	"minAppVersion": "1.0.0",
+	"description": "Search notes through progressive tag filtering.",
+	"author": "TonyKurts",
+	"authorUrl": "https://github.com/TonyKurts",
+	"isDesktopOnly": false
+}
