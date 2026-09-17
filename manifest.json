@@ -1,8 +1,8 @@
 {
-	"id": "tag-sieve",
-	"name": "Tag Sieve",
+	"id": "tag-scope",
+	"name": "Tag Scope",
 	"version": "1.0.0",
-	"minAppVersion": "1.0.0",
+	"minAppVersion": "1.4.10",
 	"description": "Search notes through progressive tag filtering.",
 	"author": "TonyKurts",
 	"authorUrl": "https://github.com/TonyKurts",
