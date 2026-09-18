@@ -4,8 +4,15 @@ import { SearchModal } from "./SearchModal";
 export default class TagScopePlugin extends Plugin {
     private searchModal: SearchModal | null = null;
 
+    prefix(value: string): string {
+        return `${this.manifest.id}-${value}`;
+    }
+
     onload() {
-        this.searchModal = new SearchModal(this.app);
+        this.searchModal = new SearchModal(
+            this.app,
+            (value) => this.prefix(value)
+        );
 
         this.addCommand({
             id: "open-search",
