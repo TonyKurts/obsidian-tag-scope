@@ -6,6 +6,7 @@ import type { Note } from "./types";
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
 	private filtered: Note[] = [];
+	private selectedTags: string[] = [];
 
 	// HTML
 	private resultsEl!: HTMLElement;
@@ -73,20 +74,43 @@ export class SearchModal extends Modal {
                 // FIXME: New tab or current tab depending on keybinds
                 this.openNote(note.file);
             });
-            
-            const nameEl = rowEl.createDiv({
+			
+			// Note name
+            rowEl.createDiv({
                 cls: this.prefix("result-name"),
                 text: note.file.basename,
             });
 
+			// Note path
+			// 
 			// FIXME: It is relevant for the user to see only the path
 			// 		  without the file name, for accuracy, but only if
 			// 		  file name = file name, and the use frontmatter
 			//        as file header setting is not used
-			const pathEl = rowEl.createDiv({
+			rowEl.createDiv({
 				cls: this.prefix("result-path"),
 				text: getDirName(note.file.path),
 			});
+
+			// Note tags. Display only those tags that have not yet been
+			// selected in the search
+			// 
+			// FIXME: Apply tag sorting rule
+			const tagsEl = rowEl.createDiv(this.prefix("result-tags"));
+			note.tags
+				.filter(tag => !this.selectedTags.includes(tag))
+				.sort()
+				.forEach(tag => {
+					tagsEl
+						.createSpan({
+							cls: this.prefix("tag"),
+							text: tag
+						})
+						.addEventListener("click", (e) => {
+							e.stopPropagation();
+							// FIXME: Add tag adding event to search on click
+						});
+				});
         });
 
         this.resultsEl.scrollTop = 0;
