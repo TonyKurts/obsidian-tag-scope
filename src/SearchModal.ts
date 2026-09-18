@@ -1,6 +1,6 @@
 import { App, Modal, TFile } from "obsidian";
 import { getAllNotes } from "./search";
-import { openNote } from "./utils";
+import { openNote, getDirName } from "./utils";
 import type { Note } from "./types";
 
 export class SearchModal extends Modal {
@@ -66,6 +66,9 @@ export class SearchModal extends Modal {
         this.filtered = [...this.notes];
         this.filtered.forEach(note => {
             const rowEl = this.resultsEl.createDiv(this.prefix("result"));
+			// FIXME: Now clicking on an entire line opens a note.
+			// 		  Need to check how this will work if
+			// 		  the click occurs on the tag chip within the row
             rowEl.addEventListener("click", () => {
                 // FIXME: New tab or current tab depending on keybinds
                 this.openNote(note.file);
@@ -73,8 +76,17 @@ export class SearchModal extends Modal {
             
             const nameEl = rowEl.createDiv({
                 cls: this.prefix("result-name"),
-                text: note.file.basename
+                text: note.file.basename,
             });
+
+			// FIXME: It is relevant for the user to see only the path
+			// 		  without the file name, for accuracy, but only if
+			// 		  file name = file name, and the use frontmatter
+			//        as file header setting is not used
+			const pathEl = rowEl.createDiv({
+				cls: this.prefix("result-path"),
+				text: getDirName(note.file.path),
+			});
         });
 
         this.resultsEl.scrollTop = 0;
