@@ -1,4 +1,4 @@
-import { App, TFile, Notice } from "obsidian";
+import { App, TFile, Notice, setIcon } from "obsidian";
 
 export async function openNote(
     app: App,
@@ -21,4 +21,37 @@ export function getDirName(path: string): string {
     );
 
     return lastSlashIndex !== -1 ? path.substring(0, lastSlashIndex + 1) : "";
+}
+
+function getClasses(classes?: string | string[]): string[] {
+    if (!classes) return [];
+    return Array.isArray(classes) ?
+        classes :
+        classes.split(" ");
+}
+
+export function createTagEl(
+    text: string,
+    icon: string,
+    classes?: string | string[],
+): HTMLElement {
+    // Tag container
+    const el = createDiv({
+        cls: [
+            ...getClasses(classes),
+            "multi-select-pill",
+        ]
+    });
+
+    // Tag name
+    el.createDiv("multi-select-pill-content")
+        .createSpan({ text });
+
+    // Tag icon
+    setIcon(
+        el.createDiv("multi-select-pill-remove-button"),
+        icon
+    );
+    
+    return el;
 }

@@ -1,0 +1,40 @@
+.tag-scope-tag {
+    --pill-color: var(--tag-color);
+    --pill-color-hover: var(--tag-color-hover);
+    --pill-color-remove: var(--tag-color);
+    --pill-color-remove-hover: var(--tag-color-hover);
+    --pill-decoration: var(--tag-decoration);
+    --pill-decoration-hover: var(--tag-decoration-hover);
+    --pill-background: var(--tag-background);
+    --pill-background-hover: var(--tag-background-hover);
+    --pill-border-color: var(--tag-border-color);
+    --pill-border-color-hover: var(--tag-border-color-hover);
+    --pill-border-width: var(--tag-border-width);
+    --pill-padding-x: var(--tag-padding-x);
+    --pill-padding-y: var(--tag-padding-y);
+    --pill-radius: var(--tag-radius);
+    --pill-corner-shape: var(--tag-corner-shape);
+    --pill-weight: var(--tag-weight);
+    --pill-focus-width: 100%;
+    --pill-focus-left-adjust: 0;
+    cursor: var(--cursor-link);
+    line-height: 1;
+}
+
+.tag-scope-result {
+    flex-direction: column;
+}
+
+.tag-scope-result-path {
+    word-break: break-word;
+    font-size: var(--font-ui-small);
+    color: var(--text-faint);
+}
+
+.tag-scope-result-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--size-2-2);
+    margin-top: var(--size-2-3);
+    font-size: var(--font-ui-small);
+}

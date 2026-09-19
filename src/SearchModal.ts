@@ -1,6 +1,6 @@
 import { App, Modal, TFile } from "obsidian";
 import { getAllNotes } from "./search";
-import { openNote, getDirName } from "./utils";
+import { openNote, getDirName, createTagEl } from "./utils";
 import type { Note } from "./types";
 
 export class SearchModal extends Modal {
@@ -10,13 +10,15 @@ export class SearchModal extends Modal {
 
 	// HTML
 	private resultsEl!: HTMLElement;
+	private notesCountEl!: HTMLElement;
 
 	constructor(
 		app: App,
 		private readonly prefix: (value: string) => string,
 	) {
 		super(app);
-
+		
+		// General modal settings
 		this.setTitle("Search by tags");
 		this.modalEl.addClass(this.prefix("modal"));
 
@@ -37,9 +39,28 @@ export class SearchModal extends Modal {
 		// 	},
 		// });
 
+		// Filename input
+		const fileFieldEl = this.contentEl.createDiv(this.prefix("field"));
+		fileFieldEl.createEl("label", { 
+			cls: this.prefix("label"),
+			text: "File",
+			attr: { for: this.prefix("file-input") } 
+		});
+		fileFieldEl.createEl("input", {
+			type: "text",
+			placeholder: "Search by name or path...",
+			attr: {
+				id: this.prefix("file-input")
+			}
+		});
+
+		// Notes count
+		this.notesCountEl = this.contentEl.createDiv(this.prefix("notes-count"));
+
 		// Results: filtered notes
-		this.resultsEl = this.contentEl.createDiv(this.prefix("results"));
-		this.refreshResults();
+		this.resultsEl = this.contentEl.createDiv({
+			cls: [this.prefix("results"), "prompt-results"]
+		});
 	}
 
 	onOpen() {
@@ -66,7 +87,13 @@ export class SearchModal extends Modal {
         // FIXME: No filtering of notes (filtered == notes)
         this.filtered = [...this.notes];
         this.filtered.forEach(note => {
-            const rowEl = this.resultsEl.createDiv(this.prefix("result"));
+            const rowEl = this.resultsEl.createDiv({
+				cls: [
+					this.prefix("result"),
+					"suggestion-item",
+					"mod-complex"
+				]
+			});
 			// FIXME: Now clicking on an entire line opens a note.
 			// 		  Need to check how this will work if
 			// 		  the click occurs on the tag chip within the row
@@ -97,19 +124,17 @@ export class SearchModal extends Modal {
 			// 
 			// FIXME: Apply tag sorting rule
 			const tagsEl = rowEl.createDiv(this.prefix("result-tags"));
+			
 			note.tags
 				.filter(tag => !this.selectedTags.includes(tag))
 				.sort()
 				.forEach(tag => {
-					tagsEl
-						.createSpan({
-							cls: this.prefix("tag"),
-							text: tag
-						})
-						.addEventListener("click", (e) => {
-							e.stopPropagation();
-							// FIXME: Add tag adding event to search on click
-						});
+					const tagEl = createTagEl(tag, "plus", this.prefix("tag"));
+					tagEl.addEventListener("click", (e) => {
+						e.stopPropagation();
+						// FIXME: Add tag adding event to search on click
+					});
+					tagsEl.appendChild(tagEl);
 				});
         });
 
