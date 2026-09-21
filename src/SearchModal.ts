@@ -26,12 +26,12 @@ export class SearchModal extends Modal {
 		this.modalEl.addClass("prompt");
 
 		// Tag input
-		// const tagFieldEl = this.contentEl.createDiv(this.prefix("field"));
-		// tagFieldEl.createEl("label", {
-		//     cls: this.prefix("label"),
-		// 	text: "Tags",
-		// 	attr: { for: this.prefix("tag-input") },
-		// });
+		const tagFieldEl = this.modalEl.createDiv({
+			cls: [
+				this.prefix("field"),
+				"prompt-input-container"
+			]
+		});
 
 		// const tagControlEl = tagFieldEl.createDiv(this.prefix("tag-control"));
 		// const tagChipsEl = tagControlEl.createSpan(this.prefix("tag-chips"));
@@ -43,27 +43,54 @@ export class SearchModal extends Modal {
 		// 	},
 		// });
 
-		// Filename input
-		// const fileFieldEl = this.modalEl.createDiv(this.prefix("field"));
-		// fileFieldEl.createEl("label", { 
-		// 	cls: this.prefix("label"),
-		// 	text: "File",
-		// 	attr: { for: this.prefix("file-input") } 
-		// });
-		// fileFieldEl.createEl("input", {
-		// 	type: "text",
-		// 	placeholder: "Search by name or path...",
-		// 	attr: {
-		// 		id: this.prefix("file-input")
-		// 	}
-		// });
+		const tagInputEl = tagFieldEl.createEl("input", {
+			type: "text",
+			cls: [
+				this.prefix("tag-input"),
+				"prompt-input"
+			],
+			placeholder: "Narrow by tags...",
+			attr: {
+				autocapitalize: "off",
+				spellcheck: false,
+				enterkeyhint: "done"
+			}
+		});
+
+		// File input
+		const fileFieldEl = this.modalEl.createDiv("prompt-input-container");
+		const fileInputEl = fileFieldEl.createEl("input", {
+			type: "text",
+			cls: [
+				this.prefix("tag-input"),
+				"prompt-input"
+			],
+			placeholder: "Find by filename or path...",
+			attr: {
+				autocapitalize: "off",
+				spellcheck: false,
+				enterkeyhint: "done"
+			}
+		});
 
 		// Results: filtered notes
 		this.resultsEl = this.modalEl.createDiv("prompt-results");
 
 		// 
 		// Keyboard bindings
-		// 
+		//
+
+		// Cycle input fields focus
+		const inputEls = [tagInputEl, fileInputEl];
+		inputEls.forEach((inputEl, index) => {
+			inputEl.addEventListener("keydown", (event) => {
+				if (event.key != "Tab") return;
+				event.preventDefault();
+				
+				const nextIndex = (index + 1) % inputEls.length;
+				inputEls[nextIndex]?.focus();
+			});
+		});
 
 		// Move down
 		this.scope.register([], "ArrowDown", () => {
@@ -81,12 +108,18 @@ export class SearchModal extends Modal {
 		
 		// Open (current tab)
 		this.scope.register([], "Enter", () => {
-			this.openNote(this.currentNote);
+			this.openNote(this.currentNote, false);
 			return false;
 		});
 
 		// Open (new tab)
-		this.scope.register(["Ctrl", "Meta"], "Enter", () => {
+		this.scope.register(["Ctrl"], "Enter", () => {
+			this.openNote(this.currentNote, true);
+			return false;
+		});
+
+		// Open (new tab) / macOS
+		this.scope.register(["Meta"], "Enter", () => {
 			this.openNote(this.currentNote, true);
 			return false;
 		});
@@ -105,6 +138,7 @@ export class SearchModal extends Modal {
 		const rows = this.rows;
 		if (rows.length === 0) return;
 		
+		// Set correct index
 		this.selectedIndex = Math.max(0, Math.min(index, rows.length - 1));
 		
 		// Highlight selected row and turn off the rest
@@ -145,11 +179,6 @@ export class SearchModal extends Modal {
         this.close();
     }
 
-	private reloadData() {
-		this.notes = getAllNotes(this.app);
-		this.refreshResults();
-	}
-
 	private refreshResults() {
 		this.resultsEl.empty();
 		this.selectedIndex = 0;
@@ -185,10 +214,7 @@ export class SearchModal extends Modal {
 			});
 
 			// Note name
-            rowEl.createDiv({
-                cls: this.prefix("result-name"),
-                text: note.file.basename,
-            });
+            rowEl.createDiv({ text: note.file.basename });
 
 			// Note path
 			// 
@@ -221,5 +247,10 @@ export class SearchModal extends Modal {
         });
 
 		this.moveSelection();
+	}
+
+	private reloadData() {
+		this.notes = getAllNotes(this.app);
+		this.refreshResults();
 	}
 }
