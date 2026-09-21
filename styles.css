@@ -23,6 +23,7 @@
 
 .tag-scope-result {
     flex-direction: column;
+    padding: var(--size-4-3);
 }
 
 .tag-scope-result-path {
@@ -35,6 +36,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--size-2-2);
-    margin-top: var(--size-2-3);
+    margin-top: var(--size-2-2);
     font-size: var(--font-ui-small);
 }

@@ -35,7 +35,7 @@ export function createTagEl(
     icon: string,
     classes?: string | string[],
 ): HTMLElement {
-    // Tag container
+    // Container
     const el = createDiv({
         cls: [
             ...getClasses(classes),
@@ -43,11 +43,11 @@ export function createTagEl(
         ]
     });
 
-    // Tag name
+    // Name
     el.createDiv("multi-select-pill-content")
         .createSpan({ text });
 
-    // Tag icon
+    // Icon
     setIcon(
         el.createDiv("multi-select-pill-remove-button"),
         icon
