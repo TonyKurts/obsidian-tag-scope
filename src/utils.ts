@@ -23,11 +23,15 @@ export function getDirName(path: string): string {
     return lastSlashIndex !== -1 ? path.substring(0, lastSlashIndex + 1) : "";
 }
 
-function getClasses(classes?: string | string[]): string[] {
+export function getClasses(classes?: string | string[]): string[] {
     if (!classes) return [];
     return Array.isArray(classes) ?
         classes :
         classes.split(" ");
+}
+
+export function getTagLength(tag: string): number {
+    return tag.split("/").length;
 }
 
 export function createTagEl(

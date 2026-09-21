@@ -302,7 +302,6 @@ export class SearchModal extends Modal {
 			
 			note.tags
 				.filter(tag => !this.selectedTags.includes(tag))
-				.sort()
 				.forEach(tag => {
 					const tagEl = createTagEl(tag, "plus", this.prefix("tag"));
 					tagEl.addEventListener("click", (event) => {

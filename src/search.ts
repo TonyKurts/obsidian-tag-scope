@@ -1,15 +1,28 @@
 import { App, getAllTags, prepareFuzzySearch, SearchMatchPart } from "obsidian";
+import { getTagLength } from "./utils";
 import type { Note, TagSuggestion } from "./types";
 
 export function getAllNotes(app: App): Note[] {
 	return app.vault.getMarkdownFiles().map((file) => {
 		const cache = app.metadataCache.getFileCache(file);
-		const tags = cache ? (getAllTags(cache) ?? []) : [];
+		
+		let tags = cache ? (getAllTags(cache) ?? []) : [];
+		tags = tags.map(tag => tag.replace("#", ""));
+
+		// Tags sorting
+		tags.sort((tagA, tagB) => 
+			getTagLength(tagA) - getTagLength(tagB) ||
+			tagA.localeCompare(tagB)
+		);
+		
 		return {
 			file,
 			tags: [...new Set(tags)],
 		};
-	});
+	}).sort((noteA, noteB) =>
+		noteA.tags.length - noteB.tags.length ||
+		noteB.file.basename.localeCompare(noteA.file.basename)
+	);
 }
 
 export function filterNotes(
@@ -27,7 +40,7 @@ export function filterNotes(
 				noteTag.startsWith(`${tag}/`)
 			)
 		)
-	)
+	);
 }
 
 export function getTagSuggestions(
@@ -50,20 +63,9 @@ export function getTagSuggestions(
 	>();
 
 	notes.forEach(note => {
-		// The same tag should only be counted once per note
-		const noteTags = new Set<string>();
-
 		note.tags.forEach(tag => {
 			tag = normalize(tag);
-			const parts = tag.split("/");
 
-			// For #project/plugin also add #project
-			for (let depth = 1; depth <= parts.length; depth++) {
-				noteTags.add(parts.slice(0, depth).join("/"));
-			}
-		});
-
-		noteTags.forEach(tag => {
 			if (selected.some(
 				selectedTag =>
 					tag === selectedTag ||
@@ -90,6 +92,7 @@ export function getTagSuggestions(
 		.sort(
 			([tagA, valueA], [tagB, valueB]) => 
 				valueB.score - valueA.score ||
+				getTagLength(tagA) - getTagLength(tagB) ||
 				tagA.localeCompare(tagB) ||
 				valueB.count - valueA.count 
 		)

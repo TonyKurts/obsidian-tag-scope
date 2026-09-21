@@ -22,7 +22,7 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         const wrapper = el.createDiv("tag-scope-suggestion");
         const nameEl = wrapper.createSpan({
             cls: "tag-scope-suggestion-name"
-        })
+        });
         
         let cursor = 0;
         for (const [from, to] of value.matches) {
