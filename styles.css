@@ -1,29 +1,47 @@
+/* 
+#
+#   Input Fields
+#
+*/
+
 .tag-scope-tag-field {
+    /* Basic size of field without indentation */
     --tag-field-row-height: calc(
         var(--input-height) +
         var(--border-width)
     );
     --search-clear-button-size: 17px;
 
+    /* May become larger and take up more space */
     flex: 0 0 auto;
     position: relative;
 
     display: flex;
     flex-direction: column;
     align-content: flex-start;
+
+    /* Gap between `selected-tags` and `input` */
     gap: var(--size-4-3);
     
+    /* Base height + padding above and below */
     min-height: calc(var(--tag-field-row-height) + var(--size-4-3) * 2);
+    
+    /*
+        Base height + Padding between tags
+        * 4 such lines + padding between `selected-tags` and `input`
+        - one padding between tags,
+        because there are always 1 fewer of them than rows
+    */
     max-height: calc(
         (var(--tag-field-row-height) + var(--size-2-2))
-        * 4 + var(--size-4-3)
+        * 4 + var(--size-4-3) - var(--size-2-2)
     );
 
     overflow-y: auto;
     overflow-x: hidden;
 
+    /* Properties to be visually the same as `.prompt-input` */
     padding: var(--size-4-3) var(--size-4-6);
-    padding-inline-end: var(--size-4-12);
 
     background-color: transparent;
     font-size: var(--font-ui-medium);
@@ -49,6 +67,10 @@
     }
 }
 
+/*
+    The input field should become one with `.tag-scope-tag-field`,
+    so we remove all out-of-step properties
+*/
 input[type="text"].tag-scope-tag-input {
     background: none;
     border: none;
@@ -58,6 +80,12 @@ input[type="text"].tag-scope-tag-input {
     box-shadow: none;
     width: 100%;
 }
+
+/* 
+#
+#   Tag pills
+#
+*/
 
 .tag-scope-tag {
     --pill-color: var(--tag-color);
@@ -85,6 +113,12 @@ input[type="text"].tag-scope-tag-input {
 .tag-scope-tag .multi-select-pill-content {
     overflow: show;
 }
+
+/* 
+#
+#   Result rows
+#
+*/
 
 .tag-scope-result {
     flex-direction: column;
