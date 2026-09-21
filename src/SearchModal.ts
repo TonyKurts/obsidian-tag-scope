@@ -1,5 +1,5 @@
 import { App, Modal } from "obsidian";
-import { getAllNotes } from "./search";
+import { getAllNotes, filterNotes } from "./search";
 import { openNote, getDirName, createTagEl } from "./utils";
 import type { Note } from "./types";
 
@@ -179,9 +179,9 @@ export class SearchModal extends Modal {
 	}
 
 	onOpen() {
-		// Remove previous tags
+		// Remove previous selected tags
 		this.selectedTags = [];
-
+		this.renderSelectedTags();
 
 		this.reloadData();
 	}
@@ -212,9 +212,12 @@ export class SearchModal extends Modal {
 	private refreshResults() {
 		this.resultsEl.empty();
 		this.selectedIndex = 0;
+		
+        this.filtered = filterNotes(
+			this.notes,
+			this.selectedTags
+		);
 
-        // FIXME: No filtering of notes (filtered == notes)
-        this.filtered = [...this.notes];
         this.filtered.forEach((note, index) => {
             const rowEl = this.resultsEl.createDiv({
 				cls: [

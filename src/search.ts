@@ -12,6 +12,22 @@ export function getAllNotes(app: App): Note[] {
 	});
 }
 
+export function filterNotes(notes: Note[], tags: string[]): Note[] {
+	// FIXME: Add fuzzy-search by filename / title / path
+	if (tags.length === 0) return notes;
+
+	// Keep notes that contain every selected tag,
+  	// including nested tags under the selected tag.
+	return notes.filter(note =>
+		tags.every(tag => 
+			note.tags.some(noteTag =>
+				noteTag === tag ||
+				noteTag.startsWith(`${tag}/`)
+			)
+		)
+	)
+}
+
 export function getTagSuggestions(
 	notes: Note[],
 	selected: string[],
