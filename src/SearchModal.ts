@@ -125,12 +125,24 @@ export class SearchModal extends Modal {
 		return this.filtered[this.selectedIndex]!;
 	}
 
-	private selectTag(tag: string): void {
+	private addTag(tag: string): void {
+		if (this.selectedTags.includes(tag)) return;
+		
 		this.selectedTags.push(tag);
-		this.selectedTagsEl.appendChild(
-			createTagEl(tag, "x", this.prefix("tag"))
-		);
-		// FIXME: Apply filter
+		this.renderSelectedTags();
+		this.refreshResults();
+	}
+
+	// Delete a tag from search by index.
+	// If no index is specified, the last tag is removed
+	private removeTag(index?: number) {
+		if (this.selectedTags.length === 0) return;
+		
+		if (index == null) this.selectedTags.pop();
+		else this.selectedTags.splice(index, 1);
+
+		this.renderSelectedTags();
+		this.refreshResults();
 	}
 
 	// Set highlight to selected row
@@ -169,7 +181,7 @@ export class SearchModal extends Modal {
 	onOpen() {
 		// Remove previous tags
 		this.selectedTags = [];
-		this.selectedTagsEl.empty();
+
 
 		this.reloadData();
 	}
@@ -182,6 +194,20 @@ export class SearchModal extends Modal {
         void openNote(this.app, note.file, newTab);
         this.close();
     }
+
+	private renderSelectedTags(): void {
+		this.selectedTagsEl.empty();
+		this.selectedTags.forEach((tag, index) => {
+			const tagEl = createTagEl(tag, "x", this.prefix("tag"));
+			tagEl.addEventListener("click", (event) => {
+				// FIXME: Add logic to turn the added tag
+				// 		  into the opposite NOT rule
+				event.stopPropagation();
+				this.removeTag(index);
+			});
+			this.selectedTagsEl.appendChild(tagEl);
+		});
+	}
 
 	private refreshResults() {
 		this.resultsEl.empty();
@@ -244,7 +270,7 @@ export class SearchModal extends Modal {
 					const tagEl = createTagEl(tag, "plus", this.prefix("tag"));
 					tagEl.addEventListener("click", (event) => {
 						event.stopPropagation();
-						this.selectTag(tag);
+						this.addTag(tag);
 					});
 					tagsEl.appendChild(tagEl);
 				});
