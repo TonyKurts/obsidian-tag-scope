@@ -1,4 +1,4 @@
-import { App, Modal } from "obsidian";
+import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes } from "./search";
 import { openNote, getDirName, createTagEl } from "./utils";
 import type { Note } from "./types";
@@ -14,6 +14,7 @@ export class SearchModal extends Modal {
 	// HTML
 	private selectedTagsEl!: HTMLElement;
 	private resultsEl!: HTMLElement;
+	private counterEl!: HTMLElement;
 
 	constructor(
 		app: App,
@@ -60,6 +61,14 @@ export class SearchModal extends Modal {
 
 		// Results: filtered notes
 		this.resultsEl = this.modalEl.createDiv("prompt-results");
+
+		// Instructions & Info
+		const infoEl = this.modalEl.createDiv(this.prefix("info"));
+
+		// Found counter
+		const counterItemEl = infoEl.createDiv(this.prefix("info-item"));
+		setIcon(counterItemEl, "files");
+		this.counterEl = counterItemEl.createSpan();
 
 		// 
 		// Keybindings & Events
@@ -212,7 +221,7 @@ export class SearchModal extends Modal {
 	private refreshResults() {
 		this.resultsEl.empty();
 		this.selectedIndex = 0;
-		
+
         this.filtered = filterNotes(
 			this.notes,
 			this.selectedTags
@@ -279,7 +288,12 @@ export class SearchModal extends Modal {
 				});
         });
 
+		this.updateCounter();
 		this.moveSelection();
+	}
+
+	private updateCounter(): void {
+		this.counterEl.innerText = this.filtered.length.toLocaleString();
 	}
 
 	private reloadData() {
