@@ -7,6 +7,7 @@ import type { Note } from "./types";
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
 	private filtered: Note[] = [];
+	private availableTags: Set<string> = new Set();
 	private selectedTags: string[] = [];
 	private selectedIndex: number = 0;
 
@@ -14,9 +15,11 @@ export class SearchModal extends Modal {
 
 	// HTML
 	private tagInputEl!: HTMLInputElement;
+	private fileInputEl!: HTMLInputElement;
 	private selectedTagsEl!: HTMLElement;
 	private resultsEl!: HTMLElement;
-	private counterEl!: HTMLElement;
+	private noteCounterEl!: HTMLElement;
+	private tagCounterEl!: HTMLElement;
 
 	// Components
 	private tagSuggest!: TagSuggest;
@@ -62,7 +65,7 @@ export class SearchModal extends Modal {
 
 		// File input
 		const fileFieldEl = this.modalEl.createDiv("prompt-input-container");
-		const fileInputEl = fileFieldEl.createEl("input", {
+		this.fileInputEl = fileFieldEl.createEl("input", {
 			type: "text",
 			cls: [
 				this.prefix("file-input"),
@@ -82,17 +85,22 @@ export class SearchModal extends Modal {
 		// Instructions & Info
 		const infoEl = this.modalEl.createDiv(this.prefix("info"));
 
-		// Found counter
-		const counterItemEl = infoEl.createDiv(this.prefix("info-item"));
-		setIcon(counterItemEl, "files");
-		this.counterEl = counterItemEl.createSpan();
+		// Tag counter
+		let infoItemEl = infoEl.createDiv(this.prefix("info-item"));
+		setIcon(infoItemEl, "tags");
+		this.tagCounterEl = infoItemEl.createSpan();
+
+		// Note counter
+		infoItemEl = infoEl.createDiv(this.prefix("info-item"));
+		setIcon(infoItemEl, "files");
+		this.noteCounterEl = infoItemEl.createSpan();
 
 		// 
 		// Keybindings & Events
 		//
 
 		// Cycle input fields focus
-		const inputEls = [this.tagInputEl, fileInputEl];
+		const inputEls = [this.tagInputEl, this.fileInputEl];
 		inputEls.forEach((inputEl, index) => {
 			inputEl.addEventListener("keydown", (event) => {
 				if (event.key != "Tab") return;
@@ -212,6 +220,10 @@ export class SearchModal extends Modal {
 		this.renderSelectedTags();
 
 		this.reloadData();
+
+		window.requestAnimationFrame(() => {
+			this.fileInputEl.focus();
+		});
 	}
 
     onClose() {
@@ -243,6 +255,7 @@ export class SearchModal extends Modal {
 		this.resultsEl.empty();
 		this.selectedIndex = 0;
 		this.tagSuggest.setValue("");
+		this.availableTags.clear();
 
         this.filtered = filterNotes(
 			this.notes,
@@ -296,13 +309,12 @@ export class SearchModal extends Modal {
 
 			// Note tags. Display only those tags that have not yet been
 			// selected in the search
-			// 
-			// FIXME: Apply tag sorting rule
 			const tagsEl = rowEl.createDiv(this.prefix("result-tags"));
 			
 			note.tags
 				.filter(tag => !this.selectedTags.includes(tag))
 				.forEach(tag => {
+					this.availableTags.add(tag);
 					const tagEl = createTagEl(tag, "plus", this.prefix("tag"));
 					tagEl.addEventListener("click", (event) => {
 						event.stopPropagation();
@@ -312,12 +324,13 @@ export class SearchModal extends Modal {
 				});
         });
 
-		this.updateCounter();
+		this.updateCounters();
 		this.moveSelection();
 	}
 
-	private updateCounter(): void {
-		this.counterEl.innerText = this.filtered.length.toLocaleString();
+	private updateCounters(): void {
+		this.noteCounterEl.innerText = this.filtered.length.toLocaleString();
+		this.tagCounterEl.innerText = this.availableTags.size.toLocaleString();
 	}
 
 	private reloadData() {
