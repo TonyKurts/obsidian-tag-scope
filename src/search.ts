@@ -1,4 +1,4 @@
-import { App, getAllTags, prepareFuzzySearch } from "obsidian";
+import { App, getAllTags, prepareFuzzySearch, SearchMatchPart } from "obsidian";
 import type { Note, TagSuggestion } from "./types";
 
 export function getAllNotes(app: App): Note[] {
@@ -35,19 +35,18 @@ export function getTagSuggestions(
 	selected: string[],
 	query: string
 ): TagSuggestion[] {
-	const normalizeTag = (value: string): string =>
+	const normalize = (value: string): string =>
 		value.trim().toLocaleLowerCase();
 
-	const normalizeForSearch = (value: string): string =>
-		normalizeTag(value)
-			.replace(/^#/, "")
-			.replaceAll(/[-_/]/g, " ");
-
-	const needle = normalizeForSearch(query);
+	const needle = normalize(query);
 	const fuzzySearch = prepareFuzzySearch(needle);
 	const suggestions = new Map<
 		string,
-		{ count: number; score: number }
+		{
+			count: number;
+			score: number;
+			matches: SearchMatchPart[];
+		}
 	>();
 
 	notes.forEach(note => {
@@ -55,7 +54,7 @@ export function getTagSuggestions(
 		const noteTags = new Set<string>();
 
 		note.tags.forEach(tag => {
-			tag = normalizeTag(tag);
+			tag = normalize(tag);
 			const parts = tag.split("/");
 
 			// For #project/plugin also add #project
@@ -71,7 +70,7 @@ export function getTagSuggestions(
 					selectedTag.startsWith(`${tag}/`)
 			)) return;
 
-			const match = fuzzySearch(normalizeForSearch(tag));
+			const match = fuzzySearch(tag);
 			if (!match) return;
 
 			const previous = suggestions.get(tag);
@@ -80,7 +79,8 @@ export function getTagSuggestions(
 			suggestions.set(
 				tag, {
 					count: (previous?.count ?? 0) + 1,
-					score: Math.max(previous?.score ?? 0, match.score)
+					score: Math.max(previous?.score ?? 0, match.score),
+					matches: previous?.matches ?? match.matches
 				}
 			);
 		});
@@ -95,6 +95,7 @@ export function getTagSuggestions(
 		)
 		.map(([name, value]) => ({
 			name,
-			count: value.count
+			count: value.count,
+			matches: value.matches
 		}));
 }
