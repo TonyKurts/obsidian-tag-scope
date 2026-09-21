@@ -12,6 +12,7 @@ export class SearchModal extends Modal {
 	private enableMouseSelection: boolean = false; 
 
 	// HTML
+	private selectedTagsEl!: HTMLElement;
 	private resultsEl!: HTMLElement;
 
 	constructor(
@@ -26,29 +27,13 @@ export class SearchModal extends Modal {
 		this.modalEl.addClass("prompt");
 
 		// Tag input
-		const tagFieldEl = this.modalEl.createDiv({
-			cls: [
-				this.prefix("field"),
-				"prompt-input-container"
-			]
-		});
-
-		// const tagControlEl = tagFieldEl.createDiv(this.prefix("tag-control"));
-		// const tagChipsEl = tagControlEl.createSpan(this.prefix("tag-chips"));
-		// const tagInputEl = tagControlEl.createEl("input", {
-		// 	type: "text",
-		// 	placeholder: "Add a tag...",
-		// 	attr: {
-		// 		id: this.prefix("tag-input"),
-		// 	},
-		// });
+		const tagFieldEl = this.modalEl.createDiv(this.prefix("tag-field"));
+		
+		this.selectedTagsEl = tagFieldEl.createDiv(this.prefix("selected-tags"));
 
 		const tagInputEl = tagFieldEl.createEl("input", {
 			type: "text",
-			cls: [
-				this.prefix("tag-input"),
-				"prompt-input"
-			],
+			cls: this.prefix("tag-input"),
 			placeholder: "Narrow by tags...",
 			attr: {
 				autocapitalize: "off",
@@ -62,7 +47,7 @@ export class SearchModal extends Modal {
 		const fileInputEl = fileFieldEl.createEl("input", {
 			type: "text",
 			cls: [
-				this.prefix("tag-input"),
+				this.prefix("file-input"),
 				"prompt-input"
 			],
 			placeholder: "Find by filename or path...",
@@ -77,7 +62,7 @@ export class SearchModal extends Modal {
 		this.resultsEl = this.modalEl.createDiv("prompt-results");
 
 		// 
-		// Keyboard bindings
+		// Keybindings & Events
 		//
 
 		// Cycle input fields focus
@@ -86,10 +71,17 @@ export class SearchModal extends Modal {
 			inputEl.addEventListener("keydown", (event) => {
 				if (event.key != "Tab") return;
 				event.preventDefault();
-				
+
 				const nextIndex = (index + 1) % inputEls.length;
 				inputEls[nextIndex]?.focus();
 			});
+		});
+
+		// Focus on tagInputEl when click on tagFieldEl
+		tagFieldEl.addEventListener("click", (event) => {
+			if (event.target !== tagInputEl) {
+				tagInputEl.focus();
+			}
 		});
 
 		// Move down
@@ -133,6 +125,14 @@ export class SearchModal extends Modal {
 		return this.filtered[this.selectedIndex]!;
 	}
 
+	private selectTag(tag: string): void {
+		this.selectedTags.push(tag);
+		this.selectedTagsEl.appendChild(
+			createTagEl(tag, "x", this.prefix("tag"))
+		);
+		// FIXME: Apply filter
+	}
+
 	// Set highlight to selected row
 	private selectRow(index: number, scroll = true): void {
 		const rows = this.rows;
@@ -167,6 +167,10 @@ export class SearchModal extends Modal {
 	}
 
 	onOpen() {
+		// Remove previous tags
+		this.selectedTags = [];
+		this.selectedTagsEl.empty();
+
 		this.reloadData();
 	}
 
@@ -238,9 +242,9 @@ export class SearchModal extends Modal {
 				.sort()
 				.forEach(tag => {
 					const tagEl = createTagEl(tag, "plus", this.prefix("tag"));
-					tagEl.addEventListener("click", (e) => {
-						e.stopPropagation();
-						// FIXME: Add tag adding event to search on click
+					tagEl.addEventListener("click", (event) => {
+						event.stopPropagation();
+						this.selectTag(tag);
 					});
 					tagsEl.appendChild(tagEl);
 				});

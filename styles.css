@@ -1,3 +1,64 @@
+.tag-scope-tag-field {
+    --tag-field-row-height: calc(
+        var(--input-height) +
+        var(--border-width)
+    );
+    --search-clear-button-size: 17px;
+
+    flex: 0 0 auto;
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+    align-content: flex-start;
+    gap: var(--size-4-3);
+    
+    min-height: calc(var(--tag-field-row-height) + var(--size-4-3) * 2);
+    max-height: calc(
+        (var(--tag-field-row-height) + var(--size-2-2))
+        * 4 + var(--size-4-3)
+    );
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: var(--size-4-3) var(--size-4-6);
+    padding-inline-end: var(--size-4-12);
+
+    background-color: transparent;
+    font-size: var(--font-ui-medium);
+
+    border: none;
+    border-radius: 0;
+    border-bottom: var(--border-width) solid var(--background-secondary);
+
+    &:hover {
+        background-color: var(--background-modifier-form-field-hover);
+        border-color: var(--background-modifier-border-hover);
+        transition: box-shadow var(--anim-duration-fast) ease-in-out, border var(--anim-duration-fast) ease-in-out;
+    }
+}
+
+.tag-scope-selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--size-2-2);
+
+    &:empty {
+        display: none;
+    }
+}
+
+input[type="text"].tag-scope-tag-input {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+    border-radius: 0;
+    box-shadow: none;
+    width: 100%;
+}
+
 .tag-scope-tag {
     --pill-color: var(--tag-color);
     --pill-color-hover: var(--tag-color-hover);
@@ -21,6 +82,10 @@
     line-height: 1;
 }
 
+.tag-scope-tag .multi-select-pill-content {
+    overflow: show;
+}
+
 .tag-scope-result {
     flex-direction: column;
     padding: var(--size-4-3);
@@ -30,6 +95,10 @@
     word-break: break-word;
     font-size: var(--font-ui-small);
     color: var(--text-faint);
+
+    &:empty {
+        display: none;
+    }
 }
 
 .tag-scope-result-tags {
@@ -38,4 +107,8 @@
     gap: var(--size-2-2);
     margin-top: var(--size-2-2);
     font-size: var(--font-ui-small);
+
+    &:empty {
+        display: none;
+    }
 }
