@@ -1,6 +1,7 @@
 import { App, Modal, setIcon } from "obsidian";
-import { getAllNotes, filterNotes } from "./search";
+import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
 import { openNote, getDirName, createTagEl } from "./utils";
+import { TagSuggest } from "./TagSuggest";
 import type { Note } from "./types";
 
 export class SearchModal extends Modal {
@@ -12,9 +13,13 @@ export class SearchModal extends Modal {
 	private enableMouseSelection: boolean = false; 
 
 	// HTML
+	private tagInputEl!: HTMLInputElement;
 	private selectedTagsEl!: HTMLElement;
 	private resultsEl!: HTMLElement;
 	private counterEl!: HTMLElement;
+
+	// Components
+	private tagSuggest!: TagSuggest;
 
 	constructor(
 		app: App,
@@ -31,8 +36,8 @@ export class SearchModal extends Modal {
 		const tagFieldEl = this.modalEl.createDiv(this.prefix("tag-field"));
 		
 		this.selectedTagsEl = tagFieldEl.createDiv(this.prefix("selected-tags"));
-
-		const tagInputEl = tagFieldEl.createEl("input", {
+		
+		this.tagInputEl = tagFieldEl.createEl("input", {
 			type: "text",
 			cls: this.prefix("tag-input"),
 			placeholder: "Narrow by tags...",
@@ -42,6 +47,18 @@ export class SearchModal extends Modal {
 				enterkeyhint: "done"
 			}
 		});
+
+		this.tagSuggest = new TagSuggest(
+			this.app,
+			this.tagInputEl,
+			(query) =>
+				getTagSuggestions(
+					this.filtered,
+					this.selectedTags,
+					query
+				),
+			(tag) => this.addTag(tag)
+		);
 
 		// File input
 		const fileFieldEl = this.modalEl.createDiv("prompt-input-container");
@@ -75,7 +92,7 @@ export class SearchModal extends Modal {
 		//
 
 		// Cycle input fields focus
-		const inputEls = [tagInputEl, fileInputEl];
+		const inputEls = [this.tagInputEl, fileInputEl];
 		inputEls.forEach((inputEl, index) => {
 			inputEl.addEventListener("keydown", (event) => {
 				if (event.key != "Tab") return;
@@ -88,8 +105,8 @@ export class SearchModal extends Modal {
 
 		// Focus on tagInputEl when click on tagFieldEl
 		tagFieldEl.addEventListener("click", (event) => {
-			if (event.target !== tagInputEl) {
-				tagInputEl.focus();
+			if (event.target !== this.tagInputEl) {
+				this.tagInputEl.focus();
 			}
 		});
 
@@ -138,6 +155,8 @@ export class SearchModal extends Modal {
 		if (this.selectedTags.includes(tag)) return;
 		
 		this.selectedTags.push(tag);
+		this.tagSuggest.close();
+
 		this.renderSelectedTags();
 		this.refreshResults();
 	}
@@ -208,12 +227,14 @@ export class SearchModal extends Modal {
 		this.selectedTagsEl.empty();
 		this.selectedTags.forEach((tag, index) => {
 			const tagEl = createTagEl(tag, "x", this.prefix("tag"));
+			
 			tagEl.addEventListener("click", (event) => {
 				// FIXME: Add logic to turn the added tag
 				// 		  into the opposite NOT rule
 				event.stopPropagation();
 				this.removeTag(index);
 			});
+
 			this.selectedTagsEl.appendChild(tagEl);
 		});
 	}
@@ -221,6 +242,7 @@ export class SearchModal extends Modal {
 	private refreshResults() {
 		this.resultsEl.empty();
 		this.selectedIndex = 0;
+		this.tagSuggest.setValue("");
 
         this.filtered = filterNotes(
 			this.notes,
@@ -256,7 +278,10 @@ export class SearchModal extends Modal {
 			});
 
 			// Note name
-            rowEl.createDiv({ text: note.file.basename });
+            rowEl.createDiv({
+				cls: this.prefix("result-name"),
+				text: note.file.basename
+			});
 
 			// Note path
 			// 

@@ -91,8 +91,8 @@ input[type="text"].tag-scope-tag-input {
     padding: var(--size-4-2) var(--size-4-6);
     color: var(--text-muted);
     display: flex;
-    background-color: var(--color-base-05);
     font-size: var(--font-ui-smaller);
+    border-top: var(--border-width) solid var(--background-secondary);
     display: flex;
     justify-content: end;
 }
@@ -148,6 +148,10 @@ input[type="text"].tag-scope-tag-input {
     padding: var(--size-4-3);
 }
 
+.tag-scope-result-name {
+    word-break: break-word;
+}
+
 .tag-scope-result-path {
     word-break: break-word;
     font-size: var(--font-ui-small);
@@ -168,4 +172,25 @@ input[type="text"].tag-scope-tag-input {
     &:empty {
         display: none;
     }
+}
+
+/* 
+#
+#   Tag Suggestions
+#
+*/
+
+.tag-scope-suggestion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--size-4-4);
+}
+
+.tag-scope-suggestion-name {
+    word-break: break-word;
+}
+
+.tag-scope-suggestion-count {
+    opacity: 0.6;
 }
