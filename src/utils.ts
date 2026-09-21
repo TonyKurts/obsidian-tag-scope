@@ -1,4 +1,4 @@
-import { App, TFile, Notice, setIcon } from "obsidian";
+import { App, TFile, Notice, setIcon, SearchMatchPart } from "obsidian";
 
 export async function openNote(
     app: App,
@@ -30,7 +30,7 @@ export function getClasses(classes?: string | string[]): string[] {
         classes.split(" ");
 }
 
-export function getTagLength(tag: string): number {
+export function getTagDepth(tag: string): number {
     return tag.split("/").length;
 }
 
@@ -58,4 +58,45 @@ export function createTagEl(
     );
     
     return el;
+}
+
+export function highlightMatches(
+    container: HTMLElement,
+    text: string,
+    matches: SearchMatchPart[]
+): void {
+    let cursor = 0;
+
+    for (const [from, to] of matches) {
+        // Skip if the area was previously passed
+        if (from < cursor) continue;
+
+        // If the cursor finds before the HIGHLIGHTED text,
+        // then it is normal text without selection
+        if (from > cursor) {
+            container.append(
+                document.createTextNode(
+                    text.slice(cursor, from)
+                )
+            );
+        }
+
+        // Text FROM and TO must be highlighted
+        const strongEl = createEl("strong");
+        strongEl.textContent = text.slice(from, to);
+        container.append(strongEl);
+
+        // It makes sense to work only from the last point TO
+        cursor = to;
+    }
+
+    // If the text turns out to be larger than what was processed
+    // through the cursor, then this is also considered normal text
+    if (cursor < text.length) {
+        container.append(
+            document.createTextNode(
+                text.slice(cursor),
+            )
+        );
+    }
 }

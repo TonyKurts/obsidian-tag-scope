@@ -133,6 +133,7 @@ input[type="text"].tag-scope-tag-input {
     line-height: 1;
 }
 
+.tag-scope-tag.multi-select-pill,
 .tag-scope-tag .multi-select-pill-content {
     overflow: show;
     max-width: none;

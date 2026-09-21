@@ -1,17 +1,17 @@
 import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
-import { openNote, getDirName, createTagEl } from "./utils";
+import { openNote, getDirName, createTagEl, highlightMatches } from "./utils";
 import { TagSuggest } from "./TagSuggest";
-import type { Note } from "./types";
+import type { FilteredNote, Note } from "./types";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
-	private filtered: Note[] = [];
+	private filtered: FilteredNote[] = [];
 	private availableTags: Set<string> = new Set();
 	private selectedTags: string[] = [];
 	private selectedIndex: number = 0;
-
-	private enableMouseSelection: boolean = false; 
+	private enableMouseSelection: boolean = false;
+	private refreshTimer: number | null = null; 
 
 	// HTML
 	private tagInputEl!: HTMLInputElement;
@@ -85,19 +85,24 @@ export class SearchModal extends Modal {
 		// Instructions & Info
 		const infoEl = this.modalEl.createDiv(this.prefix("info"));
 
-		// Tag counter
-		let infoItemEl = infoEl.createDiv(this.prefix("info-item"));
-		setIcon(infoItemEl, "tags");
-		this.tagCounterEl = infoItemEl.createSpan();
-
 		// Note counter
-		infoItemEl = infoEl.createDiv(this.prefix("info-item"));
+		let infoItemEl = infoEl.createDiv(this.prefix("info-item"));
 		setIcon(infoItemEl, "files");
 		this.noteCounterEl = infoItemEl.createSpan();
+
+		// Tag counter
+		infoItemEl = infoEl.createDiv(this.prefix("info-item"));
+		setIcon(infoItemEl, "tags");
+		this.tagCounterEl = infoItemEl.createSpan();
 
 		// 
 		// Keybindings & Events
 		//
+
+		// Search on fileinput
+		this.fileInputEl.addEventListener("input", () => {
+			this.scheduleRefreshResults();
+		});
 
 		// Cycle input fields focus
 		const inputEls = [this.tagInputEl, this.fileInputEl];
@@ -217,17 +222,18 @@ export class SearchModal extends Modal {
 	onOpen() {
 		// Remove previous selected tags
 		this.selectedTags = [];
+		this.fileInputEl.value = "";
 		this.renderSelectedTags();
 
 		this.reloadData();
-
-		window.requestAnimationFrame(() => {
-			this.fileInputEl.focus();
-		});
+		window.requestAnimationFrame(() => { this.fileInputEl.focus(); });
 	}
 
     onClose() {
-        // FIXME: Clean up
+        if (this.refreshTimer) {
+			window.clearTimeout(this.refreshTimer);
+			this.refreshTimer = null;
+		}
     }
 
     private openNote(note: Note, newTab: boolean = false) {
@@ -259,7 +265,8 @@ export class SearchModal extends Modal {
 
         this.filtered = filterNotes(
 			this.notes,
-			this.selectedTags
+			this.selectedTags,
+			this.fileInputEl.value
 		);
 
         this.filtered.forEach((note, index) => {
@@ -291,10 +298,8 @@ export class SearchModal extends Modal {
 			});
 
 			// Note name
-            rowEl.createDiv({
-				cls: this.prefix("result-name"),
-				text: note.file.basename
-			});
+            const nameEl = rowEl.createDiv(this.prefix("result-name"));
+			highlightMatches(nameEl, note.file.basename, note.nameMatches);
 
 			// Note path
 			// 
@@ -302,10 +307,9 @@ export class SearchModal extends Modal {
 			// 		  without the file name, for accuracy, but only if
 			// 		  file name = file name, and the use frontmatter
 			//        as file header setting is not used
-			rowEl.createDiv({
-				cls: this.prefix("result-path"),
-				text: getDirName(note.file.path),
-			});
+			const path = getDirName(note.file.path);
+			const pathEl = rowEl.createDiv(this.prefix("result-path"));
+			highlightMatches(pathEl, path, note.pathMatches);
 
 			// Note tags. Display only those tags that have not yet been
 			// selected in the search
@@ -326,6 +330,17 @@ export class SearchModal extends Modal {
 
 		this.updateCounters();
 		this.moveSelection();
+	}
+
+	private scheduleRefreshResults(): void {
+		if (this.refreshTimer) {
+			window.clearTimeout(this.refreshTimer);
+		}
+
+		this.refreshTimer = window.setTimeout(() => {
+			this.refreshTimer = null;
+			this.refreshResults();
+		}, 125);
 	}
 
 	private updateCounters(): void {

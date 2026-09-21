@@ -1,6 +1,6 @@
 import { App, getAllTags, prepareFuzzySearch, SearchMatchPart } from "obsidian";
-import { getTagLength } from "./utils";
-import type { Note, TagSuggestion } from "./types";
+import { getDirName, getTagDepth } from "./utils";
+import type { Note, TagSuggestion, FilteredNote } from "./types";
 
 export function getAllNotes(app: App): Note[] {
 	return app.vault.getMarkdownFiles().map((file) => {
@@ -9,9 +9,9 @@ export function getAllNotes(app: App): Note[] {
 		let tags = cache ? (getAllTags(cache) ?? []) : [];
 		tags = tags.map(tag => tag.replace("#", ""));
 
-		// Tags sorting
+		// Sorting tags within notes
 		tags.sort((tagA, tagB) => 
-			getTagLength(tagA) - getTagLength(tagB) ||
+			getTagDepth(tagA) - getTagDepth(tagB) ||
 			tagA.localeCompare(tagB)
 		);
 		
@@ -19,7 +19,7 @@ export function getAllNotes(app: App): Note[] {
 			file,
 			tags: [...new Set(tags)],
 		};
-	}).sort((noteA, noteB) =>
+	}).sort((noteA, noteB) => // Global notes sorting
 		noteA.tags.length - noteB.tags.length ||
 		noteB.file.basename.localeCompare(noteA.file.basename)
 	);
@@ -27,20 +27,77 @@ export function getAllNotes(app: App): Note[] {
 
 export function filterNotes(
 	notes: Note[],
-	tags: string[]): Note[] {
-	// FIXME: Add fuzzy-search by filename / title / path
-	if (tags.length === 0) return notes;
-
+	tags: string[],
+	query: string
+): FilteredNote[] {
+	// Filter by tags
+	// 
 	// Keep notes that contain every selected tag,
   	// including nested tags under the selected tag.
-	return notes.filter(note =>
-		tags.every(tag => 
-			note.tags.some(noteTag =>
-				noteTag === tag ||
-				noteTag.startsWith(`${tag}/`)
+	if (tags.length) {
+		notes = notes.filter(note =>
+			tags.every(tag => 
+				note.tags.some(noteTag =>
+					noteTag === tag ||
+					noteTag.startsWith(`${tag}/`)
+				)
 			)
-		)
-	);
+		);
+	}
+
+	// Filter by query
+	query = query.trim();
+	if (!query) {
+		return notes.map((note): FilteredNote => {
+			return {
+				...note,
+				nameMatches: [],
+				pathMatches: [],
+				score: 0
+			};
+		});
+	} else {
+		const searches = query
+			.split(/\s+/)
+			.map(word => prepareFuzzySearch(word));
+
+		return notes.map((note): FilteredNote | null => {
+			const nameMatches: SearchMatchPart[] = [];
+			const pathMatches: SearchMatchPart[] = [];
+			let score = 0;
+			let exclude = false;
+
+			searches.forEach(search => {
+				const nameMatch = search(note.file.basename);
+				const pathMatch = search(getDirName(note.file.path));
+				const scores: number[] = [];
+
+				if (!nameMatch && !pathMatch) {
+					exclude = true;
+					return;
+				};
+				
+				if (nameMatch) {
+					nameMatches.push(...nameMatch.matches);
+					scores.push(nameMatch.score);
+				}
+
+				if (pathMatch) {
+					pathMatches.push(...pathMatch.matches);
+					scores.push(pathMatch.score);
+				}
+
+				score += Math.max(...scores);
+			});
+
+			nameMatches.sort((a, b) => a[0] - b[0]);
+  			pathMatches.sort((a, b) => a[0] - b[0]);
+
+			return exclude ? null : {...note, nameMatches, pathMatches, score };
+		})
+		.filter(note => note !== null)
+		.sort((noteA, noteB) => noteB.score - noteA.score);
+	}
 }
 
 export function getTagSuggestions(
@@ -48,11 +105,7 @@ export function getTagSuggestions(
 	selected: string[],
 	query: string
 ): TagSuggestion[] {
-	const normalize = (value: string): string =>
-		value.trim().toLocaleLowerCase();
-
-	const needle = normalize(query);
-	const fuzzySearch = prepareFuzzySearch(needle);
+	const fuzzySearch = prepareFuzzySearch(query.trim());
 	const suggestions = new Map<
 		string,
 		{
@@ -64,8 +117,6 @@ export function getTagSuggestions(
 
 	notes.forEach(note => {
 		note.tags.forEach(tag => {
-			tag = normalize(tag);
-
 			if (selected.some(
 				selectedTag =>
 					tag === selectedTag ||
@@ -92,7 +143,7 @@ export function getTagSuggestions(
 		.sort(
 			([tagA, valueA], [tagB, valueB]) => 
 				valueB.score - valueA.score ||
-				getTagLength(tagA) - getTagLength(tagB) ||
+				getTagDepth(tagA) - getTagDepth(tagB) ||
 				tagA.localeCompare(tagB) ||
 				valueB.count - valueA.count 
 		)
