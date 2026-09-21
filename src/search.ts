@@ -1,4 +1,4 @@
-import { App, getAllTags } from "obsidian";
+import { App, getAllTags, prepareFuzzySearch } from "obsidian";
 import type { Note, TagSuggestion } from "./types";
 
 export function getAllNotes(app: App): Note[] {
@@ -35,20 +35,27 @@ export function getTagSuggestions(
 	selected: string[],
 	query: string
 ): TagSuggestion[] {
-	const normalize = (tag: string): string => {
-		return tag
-			.trim()
-			.toLocaleLowerCase();
-	}
+	const normalizeTag = (value: string): string =>
+		value.trim().toLocaleLowerCase();
 
-	const needle = normalize(query);
-	const counts = new Map<string, number>();
+	const normalizeForSearch = (value: string): string =>
+		normalizeTag(value)
+			.replace(/^#/, "")
+			.replaceAll(/[-_/]/g, " ");
+
+	const needle = normalizeForSearch(query);
+	const fuzzySearch = prepareFuzzySearch(needle);
+	const suggestions = new Map<
+		string,
+		{ count: number; score: number }
+	>();
 
 	notes.forEach(note => {
 		// The same tag should only be counted once per note
 		const noteTags = new Set<string>();
 
 		note.tags.forEach(tag => {
+			tag = normalizeTag(tag);
 			const parts = tag.split("/");
 
 			// For #project/plugin also add #project
@@ -58,25 +65,36 @@ export function getTagSuggestions(
 		});
 
 		noteTags.forEach(tag => {
-			tag = normalize(tag);
-			if (!tag.includes(needle)) return;
-
 			if (selected.some(
 				selectedTag =>
 					tag === selectedTag ||
 					selectedTag.startsWith(`${tag}/`)
 			)) return;
 
+			const match = fuzzySearch(normalizeForSearch(tag));
+			if (!match) return;
+
+			const previous = suggestions.get(tag);
+
 			// How many times this tag appears among the selected notes
-			counts.set(tag, (counts.get(tag) ?? 0) + 1);
+			suggestions.set(
+				tag, {
+					count: (previous?.count ?? 0) + 1,
+					score: Math.max(previous?.score ?? 0, match.score)
+				}
+			);
 		});
 	});
 
-	return [...counts.entries()]
+	return [...suggestions.entries()]
 		.sort(
-			([tagA, countA], [tagB, countB]) => 
+			([tagA, valueA], [tagB, valueB]) => 
+				valueB.score - valueA.score ||
 				tagA.localeCompare(tagB) ||
-				countB - countA 
+				valueB.count - valueA.count 
 		)
-		.map(([name, count]) => ({ name, count }));
+		.map(([name, value]) => ({
+			name,
+			count: value.count
+		}));
 }
