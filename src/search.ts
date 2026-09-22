@@ -1,6 +1,6 @@
 import { App, getAllTags, prepareFuzzySearch, SearchMatchPart } from "obsidian";
 import { getDirName, getTagDepth } from "./utils";
-import type { Note, TagSuggestion, FilteredNote } from "./types";
+import type { Note, TagSuggestion, FilteredNote, FuzzySearchHandler, FuzzySearchResult } from "./types";
 
 export function getAllNotes(app: App): Note[] {
 	return app.vault.getMarkdownFiles().map((file) => {
@@ -56,47 +56,68 @@ export function filterNotes(
 				score: 0
 			};
 		});
-	} else {
-		const searches = query
-			.split(/\s+/)
-			.map(word => prepareFuzzySearch(word));
-
+	} else {		
+		const searches = prepareSplitFuzzySearch(query);
 		return notes.map((note): FilteredNote | null => {
-			const nameMatches: SearchMatchPart[] = [];
-			const pathMatches: SearchMatchPart[] = [];
-			let score = 0;
-			let exclude = false;
-
-			searches.forEach(search => {
-				const nameMatch = search(note.file.basename);
-				const pathMatch = search(getDirName(note.file.path));
-				const scores: number[] = [];
-
-				if (!nameMatch && !pathMatch) {
-					exclude = true;
-					return;
-				};
-				
-				if (nameMatch) {
-					nameMatches.push(...nameMatch.matches);
-					scores.push(nameMatch.score);
-				}
-
-				if (pathMatch) {
-					pathMatches.push(...pathMatch.matches);
-					scores.push(pathMatch.score);
-				}
-
-				score += Math.max(...scores);
-			});
-
-			nameMatches.sort((a, b) => a[0] - b[0]);
-  			pathMatches.sort((a, b) => a[0] - b[0]);
-
-			return exclude ? null : {...note, nameMatches, pathMatches, score };
+			const search = splitFuzzySearch(
+				searches,
+				note.file.basename,
+				getDirName(note.file.path)
+			);
+			
+			return search ? {
+				...note,
+				nameMatches: search.matches[0] ?? [],
+				pathMatches: search.matches[1] ?? [],
+				score: search.score
+			} : null;
 		})
 		.filter(note => note !== null)
 		.sort((noteA, noteB) => noteB.score - noteA.score);
+	}
+}
+
+function prepareSplitFuzzySearch(query: string): FuzzySearchHandler[] {
+		return query
+			.split(/\s+/)
+			.map(word => prepareFuzzySearch(word));
+	}
+
+function splitFuzzySearch(
+	searchers: FuzzySearchHandler[],
+	...texts: string[]
+): FuzzySearchResult {
+	const results = searchers.map(search => {
+		return texts.map(text => {
+			return search(text);
+		});
+	});
+
+	const textsCount = texts.length;
+	const totalMathes: SearchMatchPart[][] = [];
+	let totalScore: number = 0;
+
+	for (let textIndex = 0; textIndex < textsCount; textIndex++) {
+		const matches: SearchMatchPart[] = [];
+		const scores: number[] = [];
+
+		for (const result of results) {
+			if (result.every(word => word == null)) return null;
+			
+			const resultByText = result[textIndex];
+			if (resultByText) {
+				matches.push(...resultByText.matches);
+				scores.push(resultByText.score);
+			}
+		}
+
+		totalMathes.push(matches);
+		totalScore += Math.max(...scores);
+	}
+
+	return {
+		matches: totalMathes,
+		score: totalScore
 	}
 }
 
@@ -105,7 +126,7 @@ export function getTagSuggestions(
 	selected: string[],
 	query: string
 ): TagSuggestion[] {
-	const fuzzySearch = prepareFuzzySearch(query.trim());
+	const searches = prepareSplitFuzzySearch(query);
 	const suggestions = new Map<
 		string,
 		{
@@ -123,17 +144,17 @@ export function getTagSuggestions(
 					selectedTag.startsWith(`${tag}/`)
 			)) return;
 
-			const match = fuzzySearch(tag);
-			if (!match) return;
-
+			const search = splitFuzzySearch(searches, tag);
+			if (!search) return;
+			
 			const previous = suggestions.get(tag);
 
 			// How many times this tag appears among the selected notes
 			suggestions.set(
 				tag, {
 					count: (previous?.count ?? 0) + 1,
-					score: Math.max(previous?.score ?? 0, match.score),
-					matches: previous?.matches ?? match.matches
+					score: Math.max(previous?.score ?? 0, search.score),
+					matches: previous?.matches ?? search.matches[0] ?? []
 				}
 			);
 		});

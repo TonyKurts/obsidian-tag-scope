@@ -65,8 +65,9 @@ export function highlightMatches(
     text: string,
     matches: SearchMatchPart[]
 ): void {
-    let cursor = 0;
+    matches.sort((a, b) => a[0] - b[0]);
 
+    let cursor = 0;
     for (const [from, to] of matches) {
         // Skip if the area was previously passed
         if (from < cursor) continue;

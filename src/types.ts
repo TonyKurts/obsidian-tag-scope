@@ -1,4 +1,4 @@
-import type { TFile, SearchMatchPart } from "obsidian";
+import type { TFile, SearchMatchPart, SearchResult } from "obsidian";
 
 export interface TagSuggestion {
     name: string;
@@ -16,3 +16,9 @@ export interface FilteredNote extends Note {
     pathMatches: SearchMatchPart[];
     score: number;
 };
+
+export type FuzzySearchHandler = (text: string) => SearchResult | null;
+export type FuzzySearchResult = {
+    matches: SearchMatchPart[][],
+    score: number
+} | null;
