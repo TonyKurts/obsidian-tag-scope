@@ -12,13 +12,13 @@ export class SearchModal extends Modal {
 	private selectedTags: string[] = [];
 	private selectedIndex: number = 0;
 	private enableMouseSelection: boolean = false;
+	private lastEmptyBackspaceAt: number = 0;
 
 	private readonly debouncedRefresh = createDebounce(
 		() => this.refreshResults()
 	);
 
 	// HTML
-	private tagInputEl!: HTMLInputElement;
 	private fileInputEl!: HTMLInputElement;
 	private selectedTagsEl!: HTMLElement;
 	private resultsEl!: HTMLElement;
@@ -60,7 +60,7 @@ export class SearchModal extends Modal {
 		
 		this.selectedTagsEl = tagFieldEl.createDiv(this.prefix("selected-tags"));
 		
-		this.tagInputEl = tagFieldEl.createEl("input", {
+		const tagInputEl = tagFieldEl.createEl("input", {
 			type: "text",
 			cls: this.prefix("tag-input"),
 			placeholder: "Narrow by tags...",
@@ -73,7 +73,7 @@ export class SearchModal extends Modal {
 
 		this.tagSuggest = new TagSuggest(
 			this.app,
-			this.tagInputEl,
+			tagInputEl,
 			(query) =>
 				getTagSuggestions(
 					this.filtered,
@@ -109,7 +109,7 @@ export class SearchModal extends Modal {
 		});
 
 		// Cycle input fields focus
-		const inputEls = [this.tagInputEl, this.fileInputEl];
+		const inputEls = [tagInputEl, this.fileInputEl];
 		inputEls.forEach((inputEl, index) => {
 			inputEl.addEventListener("keydown", (event) => {
 				if (event.key != "Tab") return;
@@ -122,10 +122,35 @@ export class SearchModal extends Modal {
 
 		// Focus on tagInputEl when click on tagFieldEl
 		tagFieldEl.addEventListener("click", (event) => {
-			if (event.target !== this.tagInputEl) {
-				this.tagInputEl.focus();
+			if (event.target !== tagInputEl) {
+				tagInputEl.focus();
 			}
 		});
+
+		// Double `Backspace` on an empty tagInputEl removes
+		// the last selected tag
+		tagInputEl.addEventListener("keydown", (event) => {
+			if (
+				event.key !== "Backspace" ||
+				tagInputEl.value !== ""
+			) {
+				this.lastEmptyBackspaceAt = 0;
+				return;
+			}
+
+			const now = Date.now();
+			const delay = 500;
+
+			if (now - this.lastEmptyBackspaceAt <= delay) {
+				event.preventDefault();
+				this.lastEmptyBackspaceAt = 0;
+				this.removeTag();
+				return;
+			}
+
+			this.lastEmptyBackspaceAt = now;
+		});
+
 
 		// Move down
 		this.scope.register([], "ArrowDown", () => {
