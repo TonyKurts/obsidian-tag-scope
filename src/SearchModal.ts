@@ -56,6 +56,9 @@ export class SearchModal extends Modal {
 			}
 		});
 
+		// Close button
+		const closeBtnEl = fileFieldEl.createDiv("search-input-clear-button");
+
 		// Tag input
 		const tagFieldEl = this.modalEl.createDiv(this.prefix("tag-field"));
 		
@@ -103,6 +106,9 @@ export class SearchModal extends Modal {
 		// 
 		// Keybindings & Events
 		//
+
+		// Close on button
+		closeBtnEl.addEventListener("click", () => { this.close(); });
 
 		// Search on fileinput
 		this.fileInputEl.addEventListener("input", () => {
