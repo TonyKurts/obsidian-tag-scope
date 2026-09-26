@@ -1,4 +1,4 @@
-import { App, TFile, Notice, setIcon, SearchMatchPart } from "obsidian";
+import { App, TFile, Notice, SearchMatchPart } from "obsidian";
 
 export async function openNote(
     app: App,
@@ -32,32 +32,6 @@ export function getClasses(classes?: string | string[]): string[] {
 
 export function getTagDepth(tag: string): number {
     return tag.split("/").length;
-}
-
-export function createTagEl(
-    text: string,
-    icon: string,
-    classes?: string | string[],
-): HTMLElement {
-    // Container
-    const el = createDiv({
-        cls: [
-            ...getClasses(classes),
-            "multi-select-pill",
-        ]
-    });
-
-    // Name
-    el.createDiv("multi-select-pill-content")
-        .createSpan({ text });
-
-    // Icon
-    setIcon(
-        el.createDiv("multi-select-pill-remove-button"),
-        icon
-    );
-    
-    return el;
 }
 
 export function highlightMatches(

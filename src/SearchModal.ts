@@ -1,6 +1,7 @@
 import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
-import { openNote, getDirName, createTagEl, highlightMatches } from "./utils";
+import { openNote, getDirName, highlightMatches } from "./utils";
+import { TagEl } from "./TagEl";
 import { TagSuggest } from "./TagSuggest";
 import type { FilteredNote, Note } from "./types";
 import { createDebounce } from "./debounce";
@@ -270,16 +271,16 @@ export class SearchModal extends Modal {
 	private renderSelectedTags(): void {
 		this.selectedTagsEl.empty();
 		this.selectedTags.forEach((tag, index) => {
-			const tagEl = createTagEl(tag, "x", this.prefix("tag"));
+			const tagEl = new TagEl(tag, "x", this.prefix("tag"));
 			
-			tagEl.addEventListener("click", (event) => {
+			tagEl.el.addEventListener("click", (event) => {
 				// FIXME: Add logic to turn the added tag
 				// 		  into the opposite NOT rule
 				event.stopPropagation();
 				this.removeTag(index);
 			});
 
-			this.selectedTagsEl.appendChild(tagEl);
+			this.selectedTagsEl.appendChild(tagEl.el);
 		});
 	}
 
@@ -345,12 +346,20 @@ export class SearchModal extends Modal {
 				.filter(tag => !this.selectedTags.includes(tag))
 				.forEach(tag => {
 					this.availableTags.add(tag);
-					const tagEl = createTagEl(tag, "plus", this.prefix("tag"));
-					tagEl.addEventListener("click", (event) => {
+					const tagEl = new TagEl(tag, "plus", this.prefix("tag"));
+					tagEl.el.addEventListener("click", (event) => {
 						event.stopPropagation();
 						this.addTag(tag);
 					});
-					tagsEl.appendChild(tagEl);
+
+					// If among the selected tags there is a more general tag than the one
+					// that appears in the note, then the tag in the note receives
+					// additional highlighting to indicate a potential refinement
+					this.selectedTags.forEach(selectedTag => {
+						tagEl.highlightMatch(selectedTag);
+					});
+
+					tagsEl.appendChild(tagEl.el);
 				});
         });
 
