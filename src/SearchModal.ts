@@ -369,6 +369,14 @@ export class SearchModal extends Modal {
 				});
         });
 
+		// Not found label
+		if (this.filtered.length === 0) {
+			this.resultsEl.createDiv({
+				cls: "suggestion-empty",
+				text: "No notes found."
+			});
+		}
+
 		this.updateCounters();
 		this.moveSelection();
 	}
