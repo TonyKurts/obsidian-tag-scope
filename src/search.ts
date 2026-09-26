@@ -105,6 +105,7 @@ function splitFuzzySearch(
 			if (result.every(word => word == null)) return null;
 			
 			const resultByText = result[textIndex];
+			
 			if (resultByText) {
 				matches.push(...resultByText.matches);
 				scores.push(resultByText.score);

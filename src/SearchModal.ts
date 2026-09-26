@@ -3,6 +3,7 @@ import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
 import { openNote, getDirName, createTagEl, highlightMatches } from "./utils";
 import { TagSuggest } from "./TagSuggest";
 import type { FilteredNote, Note } from "./types";
+import { createDebounce } from "./debounce";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
@@ -11,7 +12,10 @@ export class SearchModal extends Modal {
 	private selectedTags: string[] = [];
 	private selectedIndex: number = 0;
 	private enableMouseSelection: boolean = false;
-	private refreshTimer: number | null = null; 
+
+	private readonly debouncedRefresh = createDebounce(
+		() => this.refreshResults()
+	);
 
 	// HTML
 	private tagInputEl!: HTMLInputElement;
@@ -101,7 +105,7 @@ export class SearchModal extends Modal {
 
 		// Search on fileinput
 		this.fileInputEl.addEventListener("input", () => {
-			this.scheduleRefreshResults();
+			this.debouncedRefresh.call();
 		});
 
 		// Cycle input fields focus
@@ -226,14 +230,11 @@ export class SearchModal extends Modal {
 		this.renderSelectedTags();
 
 		this.reloadData();
-		window.requestAnimationFrame(() => { this.fileInputEl.focus(); });
 	}
 
     onClose() {
-        if (this.refreshTimer) {
-			window.clearTimeout(this.refreshTimer);
-			this.refreshTimer = null;
-		}
+        this.debouncedRefresh.cancel();
+  		this.tagSuggest.close();
     }
 
     private openNote(note: Note, newTab: boolean = false) {
@@ -330,17 +331,6 @@ export class SearchModal extends Modal {
 
 		this.updateCounters();
 		this.moveSelection();
-	}
-
-	private scheduleRefreshResults(): void {
-		if (this.refreshTimer) {
-			window.clearTimeout(this.refreshTimer);
-		}
-
-		this.refreshTimer = window.setTimeout(() => {
-			this.refreshTimer = null;
-			this.refreshResults();
-		}, 125);
 	}
 
 	private updateCounters(): void {

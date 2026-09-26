@@ -1,8 +1,13 @@
 import { App, AbstractInputSuggest } from "obsidian";
 import { TagSuggestion } from "./types";
 import { highlightMatches } from "./utils";
+import { createDebounce } from "./debounce";
 
 export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
+    private debouncedGetItems = createDebounce(
+        (query: string): TagSuggestion[] => { return this.getItems(query); }
+    );
+
     constructor(
         app: App,
         textInputEl: HTMLInputElement | HTMLDivElement,
@@ -15,8 +20,8 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         });
     }
 
-    protected getSuggestions(query: string): TagSuggestion[] {
-        return this.getItems(query);
+    protected async getSuggestions(query: string): Promise<TagSuggestion[]> {
+        return await this.debouncedGetItems.call(query);
     }
 
     renderSuggestion(value: TagSuggestion, el: HTMLElement): void {
