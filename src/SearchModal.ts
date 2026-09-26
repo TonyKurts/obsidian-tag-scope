@@ -39,6 +39,22 @@ export class SearchModal extends Modal {
 		this.modalEl.removeClass("modal");
 		this.modalEl.addClass("prompt");
 
+		// File input
+		const fileFieldEl = this.modalEl.createDiv("prompt-input-container");
+		this.fileInputEl = fileFieldEl.createEl("input", {
+			type: "text",
+			cls: [
+				this.prefix("file-input"),
+				"prompt-input"
+			],
+			placeholder: "Find by filename or path...",
+			attr: {
+				autocapitalize: "off",
+				spellcheck: false,
+				enterkeyhint: "done"
+			}
+		});
+
 		// Tag input
 		const tagFieldEl = this.modalEl.createDiv(this.prefix("tag-field"));
 		
@@ -66,22 +82,6 @@ export class SearchModal extends Modal {
 				),
 			(tag) => this.addTag(tag)
 		);
-
-		// File input
-		const fileFieldEl = this.modalEl.createDiv("prompt-input-container");
-		this.fileInputEl = fileFieldEl.createEl("input", {
-			type: "text",
-			cls: [
-				this.prefix("file-input"),
-				"prompt-input"
-			],
-			placeholder: "Find by filename or path...",
-			attr: {
-				autocapitalize: "off",
-				spellcheck: false,
-				enterkeyhint: "done"
-			}
-		});
 
 		// Results: filtered notes
 		this.resultsEl = this.modalEl.createDiv("prompt-results");
