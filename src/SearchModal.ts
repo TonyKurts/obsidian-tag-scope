@@ -112,7 +112,7 @@ export class SearchModal extends Modal {
 
 		// Search on fileinput
 		this.fileInputEl.addEventListener("input", () => {
-			this.debouncedRefresh.call();
+			void this.debouncedRefresh.call();
 		});
 
 		// Cycle input fields focus

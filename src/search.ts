@@ -1,4 +1,4 @@
-import { App, getAllTags, prepareFuzzySearch, SearchMatchPart } from "obsidian";
+import { App, getAllTags, prepareFuzzySearch, SearchMatchPart, Value } from "obsidian";
 import { getDirName, getTagDepth } from "./utils";
 import type { Note, TagSuggestion, FilteredNote, FuzzySearchHandler, FuzzySearchResult } from "./types";
 
@@ -138,7 +138,18 @@ export function getTagSuggestions(
 	>();
 
 	notes.forEach(note => {
+		// The same tag should only be counted once per note
+		const noteTags = new Set<string>();
+
+		// For #project/plugin also add #project
 		note.tags.forEach(tag => {
+			const parts = tag.split("/");
+			for (let depth = 1; depth <= parts.length; depth++) {
+				noteTags.add(parts.slice(0, depth).join("/"));
+			}
+		});
+
+		noteTags.forEach(tag => {
 			if (selected.some(
 				selectedTag =>
 					tag === selectedTag ||
@@ -161,12 +172,34 @@ export function getTagSuggestions(
 		});
 	});
 
-	return [...suggestions.entries()]
+	const entries = [...suggestions.entries()];
+
+	return entries
+		.filter(([parent, meta]) => {
+			// Collect only immediate children, excluding deeper descendants
+			const children = entries.filter(([tag]) =>
+				tag.startsWith(`${parent}/`) &&
+				!tag.slice(parent.length + 1). includes("/")
+			);
+
+			// Keep a parent when it has multiple immediate child tags
+			const hasSeveralChildren = children.length > 1;
+
+			// Also keep it when its count differs from the combined counts of its children
+			const hasDifferentCount =
+				meta.count !==
+				children.reduce(
+					(acc, [, childMeta]) => acc + childMeta.count, 0
+				);
+
+			// Retain the parent if either condition makes it useful as a suggestion
+			return hasSeveralChildren || hasDifferentCount;
+		})
 		.sort(
 			([tagA, valueA], [tagB, valueB]) => 
 				valueB.score - valueA.score ||
-				getTagDepth(tagA) - getTagDepth(tagB) ||
 				tagA.localeCompare(tagB) ||
+				getTagDepth(tagA) - getTagDepth(tagB) ||
 				valueB.count - valueA.count 
 		)
 		.map(([name, value]) => ({
