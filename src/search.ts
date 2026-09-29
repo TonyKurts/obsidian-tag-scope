@@ -1,4 +1,4 @@
-import { App, getAllTags, prepareFuzzySearch, SearchMatchPart, Value } from "obsidian";
+import { App, getAllTags, prepareFuzzySearch, SearchMatchPart } from "obsidian";
 import { getDirName, getTagDepth } from "./utils";
 import type { Note, TagSuggestion, FilteredNote, FuzzySearchHandler, FuzzySearchResult } from "./types";
 
@@ -173,7 +173,6 @@ export function getTagSuggestions(
 	});
 
 	const entries = [...suggestions.entries()];
-
 	return entries
 		.filter(([parent, meta]) => {
 			// Collect only immediate children, excluding deeper descendants
@@ -198,9 +197,7 @@ export function getTagSuggestions(
 		.sort(
 			([tagA, valueA], [tagB, valueB]) => 
 				valueB.score - valueA.score ||
-				tagA.localeCompare(tagB) ||
-				getTagDepth(tagA) - getTagDepth(tagB) ||
-				valueB.count - valueA.count 
+				tagA.localeCompare(tagB)
 		)
 		.map(([name, value]) => ({
 			name,

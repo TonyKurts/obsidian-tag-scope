@@ -21,7 +21,7 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
     }
 
     protected async getSuggestions(query: string): Promise<TagSuggestion[]> {
-        return await this.debouncedGetItems.call(query);
+        return (await this.debouncedGetItems.call(query)) ?? [];
     }
 
     renderSuggestion(value: TagSuggestion, el: HTMLElement): void {

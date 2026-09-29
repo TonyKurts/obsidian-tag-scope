@@ -1,6 +1,6 @@
 export interface Debounced<Args extends unknown[], Result> {
     // Schedule the callback and resolve with its result after the debounce delay
-    call(...args: Args): Promise<Result>;
+    call(...args: Args): Promise<Result | undefined>;
     // Clear the scheduled callback and reject its pending Promise
     cancel(): void;
     // Expose the timer ID so callers can check whether a call is pending
@@ -14,24 +14,26 @@ export function createDebounce<Args extends unknown[], Result>(
     delay = 150
 ): Debounced<Args, Result> {
     const timer = { id: null as number | null  };
-    // Keep the reject function for the call whose timer is currently pending
-    let rejectPending: ((reason?: unknown) => void) | null = null;
+    let resolvePending: ((value: Result | undefined) => void) | null = null;
 
-    const call = (...args: Args): Promise<Result> => {
+    const call = (...args: Args): Promise<Result | undefined> => {
         if (timer.id !== null) {
-			// A newer call replaces the pending one, so clear its timer and reject its Promise
+			// A newer call replaces the pending one, so clear its timer
+            // and reject its Promise
 			window.clearTimeout(timer.id);
 			timer.id = null;
-            rejectPending?.(new Error("Debounced call superseded"));
+            resolvePending?.(undefined);
+            resolvePending = null;
         }
 
-        return new Promise<Result>((resolve, reject) => {
-            rejectPending = reject;
+        return new Promise<Result | undefined>((resolve, reject) => {
+            resolvePending = resolve;
             timer.id = window.setTimeout(() => {
                 timer.id = null;
-                rejectPending = null;
+                resolvePending = null;
                 
-                // Start the callback in a Promise chain so synchronous throws are rejected too
+                // Start the callback in a Promise chain so synchronous throws
+                // are rejected too
                 Promise.resolve()
                     .then(() => callback(...args))
                     .then(resolve, reject);
@@ -41,11 +43,12 @@ export function createDebounce<Args extends unknown[], Result>(
 
     const cancel = (): void => {
         if (timer.id) {
-			// Cancellation prevents the callback from running, so reject its pending Promise
+			// Cancellation prevents the callback from running, so reject
+            // its pending Promise
 			window.clearTimeout(timer.id);
 			timer.id = null;
-			rejectPending?.(new Error("Debounced call cancelled"));
-			rejectPending = null;
+			resolvePending?.(undefined);
+			resolvePending = null;
         }
     };
 
