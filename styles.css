@@ -130,6 +130,12 @@ input[type="text"].tag-scope-tag-input {
 .tag-scope-tag .multi-select-pill-content {
     overflow: visible;
     max-width: none;
+    text-decoration: var(--pill-decoration);
+}
+
+.tag-scope-tag-exclude {
+    --tag-decoration: line-through;
+    --tag-decoration-hover: var(--tag-decoration);
 }
 
 /* 

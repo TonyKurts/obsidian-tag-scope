@@ -1,6 +1,6 @@
 import { App, getAllTags, prepareFuzzySearch, SearchMatchPart } from "obsidian";
-import { getDirName, getTagDepth } from "./utils";
-import type { Note, TagSuggestion, FilteredNote, FuzzySearchHandler, FuzzySearchResult } from "./types";
+import { getDirName } from "./utils";
+import type { Note, TagSuggestion, FilteredNote, FuzzySearchHandler, FuzzySearchResult, TagFilter } from "./types";
 
 export function getAllNotes(app: App): Note[] {
 	return app.vault.getMarkdownFiles().map((file) => {
@@ -8,12 +8,7 @@ export function getAllNotes(app: App): Note[] {
 		
 		let tags = cache ? (getAllTags(cache) ?? []) : [];
 		tags = tags.map(tag => tag.replace("#", ""));
-
-		// Sorting tags within notes
-		tags.sort((tagA, tagB) => 
-			getTagDepth(tagA) - getTagDepth(tagB) ||
-			tagA.localeCompare(tagB)
-		);
+		tags.sort((tagA, tagB) => tagA.localeCompare(tagB) );
 		
 		return {
 			file,
@@ -21,27 +16,31 @@ export function getAllNotes(app: App): Note[] {
 		};
 	}).sort((noteA, noteB) => // Global notes sorting
 		noteA.tags.length - noteB.tags.length ||
-		noteB.file.basename.localeCompare(noteA.file.basename)
+		getDirName(noteA.file.path).localeCompare(getDirName(noteB.file.path)) ||
+		noteA.file.basename.localeCompare(noteB.file.basename)
 	);
 }
 
 export function filterNotes(
 	notes: Note[],
-	tags: string[],
+	tags: TagFilter[],
 	query: string
 ): FilteredNote[] {
 	// Filter by tags
-	// 
-	// Keep notes that contain every selected tag,
-  	// including nested tags under the selected tag.
 	if (tags.length) {
 		notes = notes.filter(note =>
-			tags.every(tag => 
-				note.tags.some(noteTag =>
-					noteTag === tag ||
-					noteTag.startsWith(`${tag}/`)
-				)
-			)
+			// Ensure the note satisfies EVERY tag criteria in the filter list
+			tags.every(({name, exclude}) => {
+				// Check if the note has the specified tag
+				// or any of its nested sub-tags (e.g., "work/projects")
+				const hasTag = note.tags.some(noteTag =>
+					noteTag === name ||
+					noteTag.startsWith(`${name}/`)
+				);
+
+				// Include filters require a match; exclude filters reject one
+				return exclude ? !hasTag : hasTag;
+			})
 		);
 	}
 
@@ -124,9 +123,13 @@ function splitFuzzySearch(
 
 export function getTagSuggestions(
 	notes: Note[],
-	selected: string[],
+	selected: TagFilter[],
 	query: string
 ): TagSuggestion[] {
+	if (query.startsWith("!")) {
+		query = query.slice(1);
+	}
+
 	const searches = prepareSplitFuzzySearch(query);
 	const suggestions = new Map<
 		string,
@@ -151,9 +154,9 @@ export function getTagSuggestions(
 
 		noteTags.forEach(tag => {
 			if (selected.some(
-				selectedTag =>
-					tag === selectedTag ||
-					selectedTag.startsWith(`${tag}/`)
+				({name}) =>
+					tag === name ||
+					name.startsWith(`${tag}/`)
 			)) return;
 
 			const search = splitFuzzySearch(searches, tag);

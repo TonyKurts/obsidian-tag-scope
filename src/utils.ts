@@ -30,10 +30,6 @@ export function getClasses(classes?: string | string[]): string[] {
         classes.split(" ");
 }
 
-export function getTagDepth(tag: string): number {
-    return tag.split("/").length;
-}
-
 export function highlightMatches(
     container: HTMLElement,
     text: string,

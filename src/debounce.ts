@@ -1,8 +1,10 @@
 export interface Debounced<Args extends unknown[], Result> {
     // Schedule the callback and resolve with its result after the debounce delay
     call(...args: Args): Promise<Result | undefined>;
+
     // Clear the scheduled callback and reject its pending Promise
     cancel(): void;
+    
     // Expose the timer ID so callers can check whether a call is pending
     timer: {
         id: number | null

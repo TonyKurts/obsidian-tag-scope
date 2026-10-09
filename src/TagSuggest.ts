@@ -12,12 +12,14 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         app: App,
         textInputEl: HTMLInputElement | HTMLDivElement,
         private readonly getItems: (query: string) => TagSuggestion[],
-        private readonly onTagSelected: (tag: string) => void
+        private readonly onTagSelected: (tag: string, exclude: boolean) => void
     ) {
         super(app, textInputEl);
         this.onSelect((value) => {
-            this.onTagSelected(value.name);
+            const exclude = this.getValue().startsWith("!");
+            this.onTagSelected(value.name, exclude);
         });
+
     }
 
     protected async getSuggestions(query: string): Promise<TagSuggestion[]> {

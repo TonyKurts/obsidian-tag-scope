@@ -11,6 +11,11 @@ export interface Note {
     tags: string[];
 };
 
+export interface TagFilter {
+    name: string,
+    exclude: boolean
+}
+
 export interface FilteredNote extends Note {
     nameMatches: SearchMatchPart[];
     pathMatches: SearchMatchPart[];

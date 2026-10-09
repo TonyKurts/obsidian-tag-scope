@@ -37,6 +37,7 @@ export class TagEl {
     highlightMatch(query: string): void {
         const search = prepareSimpleSearch(query);
         const result = search(this.name);
+        
         if (result) {
             this.nameEl.empty();
             highlightMatches(

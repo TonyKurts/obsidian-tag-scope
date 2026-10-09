@@ -3,14 +3,14 @@ import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
 import { openNote, getDirName, highlightMatches } from "./utils";
 import { TagEl } from "./TagEl";
 import { TagSuggest } from "./TagSuggest";
-import type { FilteredNote, Note } from "./types";
+import type { FilteredNote, Note, TagFilter } from "./types";
 import { createDebounce } from "./debounce";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
 	private filtered: FilteredNote[] = [];
 	private availableTags: Set<string> = new Set();
-	private selectedTags: string[] = [];
+	private selectedTags: TagFilter[] = [];
 	private selectedIndex: number = 0;
 	private enableMouseSelection: boolean = false;
 	private lastEmptyBackspaceAt: number = 0;
@@ -84,7 +84,7 @@ export class SearchModal extends Modal {
 					this.selectedTags,
 					query
 				),
-			(tag) => this.addTag(tag)
+			(tag, exclude) => this.addTag(tag, exclude)
 		);
 
 		// Results: filtered notes
@@ -202,12 +202,28 @@ export class SearchModal extends Modal {
 		return this.filtered[this.selectedIndex]!;
 	}
 
-	private addTag(tag: string): void {
-		if (this.selectedTags.includes(tag)) return;
-		
-		this.selectedTags.push(tag);
-		this.tagSuggest.close();
+	// Is the passed tag in the list of already selected ones?
+	private isTagSelected(tag: string) {
+		return Boolean(this.selectedTags.find(
+			selectedTag => selectedTag.name === tag
+		));
+	};
 
+	private invertTag(tag: TagFilter) {
+		tag.exclude = !tag.exclude;
+		this.renderSelectedTags();
+		this.refreshResults();
+	}
+
+	private addTag(tag: string, exclude = false) {
+		if (this.isTagSelected(tag)) return;
+		
+		this.selectedTags.push({
+			name: tag,
+			exclude
+		});
+
+		this.tagSuggest.close();
 		this.renderSelectedTags();
 		this.refreshResults();
 	}
@@ -225,7 +241,7 @@ export class SearchModal extends Modal {
 	}
 
 	// Set highlight to selected row
-	private selectRow(index: number, scroll = true): void {
+	private selectRow(index: number, scroll = true) {
 		const rows = this.rows;
 		if (rows.length === 0) return;
 		
@@ -262,7 +278,6 @@ export class SearchModal extends Modal {
 		this.selectedTags = [];
 		this.fileInputEl.value = "";
 		this.renderSelectedTags();
-
 		this.reloadData();
 	}
 
@@ -279,13 +294,20 @@ export class SearchModal extends Modal {
 	private renderSelectedTags(): void {
 		this.selectedTagsEl.empty();
 		this.selectedTags.forEach((tag, index) => {
-			const tagEl = new TagEl(tag, "x", this.prefix("tag"));
+			const tagEl = new TagEl(
+				tag.name,
+				"x",
+				[
+					this.prefix("tag"),
+					tag.exclude ? this.prefix("tag-exclude") : ""
+				]
+				
+			);
 			
 			tagEl.el.addEventListener("click", (event) => {
-				// FIXME: Add logic to turn the added tag
-				// 		  into the opposite NOT rule
 				event.stopPropagation();
-				this.removeTag(index);
+				if (event.ctrlKey) this.invertTag(tag);
+				else this.removeTag(index);
 			});
 
 			// Show context menu on right click
@@ -298,7 +320,7 @@ export class SearchModal extends Modal {
 						item
 							.setTitle("Invert")
 							.setIcon("arrow-left-right")
-							// FIXME: onclick
+							.onClick(() => { this.invertTag(tag); })
 					})
 					.addItem(item => {
 						item
@@ -372,17 +394,15 @@ export class SearchModal extends Modal {
 			const tagsEl = rowEl.createDiv(this.prefix("result-tags"));
 			
 			note.tags
-				.filter(tag => !this.selectedTags.includes(tag))
+				.filter(tag => !this.isTagSelected(tag))
 				.forEach(tag => {
 					this.availableTags.add(tag);
 					const tagEl = new TagEl(tag, "plus", this.prefix("tag"));
 
-					// Add tag in search on click
-					// 
-					// FIXME: Add exlude and when Ctrl is pressed
+					// Add tag in search on click (include/exclude)
 					tagEl.el.addEventListener("click", (event) => {
 						event.stopPropagation();
-						this.addTag(tag);
+						this.addTag(tag, event.ctrlKey);
 					});
 
 					// Show context menu on right click
@@ -395,13 +415,17 @@ export class SearchModal extends Modal {
 								item
 									.setTitle("Include")
 									.setIcon("squares-intersect")
-									.onClick(() => { this.addTag(tag); })
+									.onClick(() => {
+										this.addTag(tag);
+									})
 							})
 							.addItem(item => {
 								item
 									.setTitle("Exclude")
 									.setIcon("squares-exclude")
-									// FIXME: onclick
+									.onClick(() => {
+										this.addTag(tag, true);
+									})
 							})
 							.showAtMouseEvent(event);
 					});
@@ -409,8 +433,8 @@ export class SearchModal extends Modal {
 					// If among the selected tags there is a more general tag than the one
 					// that appears in the note, then the tag in the note receives
 					// additional highlighting to indicate a potential refinement
-					this.selectedTags.forEach(selectedTag => {
-						tagEl.highlightMatch(selectedTag);
+					this.selectedTags.forEach(({ name }) => {
+						tagEl.highlightMatch(name);
 					});
 
 					tagsEl.appendChild(tagEl.el);
