@@ -1,4 +1,4 @@
-import { App, Modal, setIcon } from "obsidian";
+import { App, Modal, setIcon, Menu } from "obsidian";
 import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
 import { openNote, getDirName, highlightMatches } from "./utils";
 import { TagEl } from "./TagEl";
@@ -108,7 +108,9 @@ export class SearchModal extends Modal {
 		//
 
 		// Close on button
-		closeBtnEl.addEventListener("click", () => { this.close(); });
+		closeBtnEl.addEventListener("click", () => {
+			this.close();
+		});
 
 		// Search on fileinput
 		this.fileInputEl.addEventListener("input", () => {
@@ -286,6 +288,27 @@ export class SearchModal extends Modal {
 				this.removeTag(index);
 			});
 
+			// Show context menu on right click
+			tagEl.el.addEventListener("contextmenu", (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+
+				new Menu()
+					.addItem(item => {
+						item
+							.setTitle("Invert")
+							.setIcon("arrow-left-right")
+							// FIXME: onclick
+					})
+					.addItem(item => {
+						item
+							.setTitle("Remove")
+							.setIcon("x")
+							.onClick(() => { this.removeTag(index); })
+					})
+					.showAtMouseEvent(event);
+			});
+
 			this.selectedTagsEl.appendChild(tagEl.el);
 		});
 	}
@@ -353,9 +376,34 @@ export class SearchModal extends Modal {
 				.forEach(tag => {
 					this.availableTags.add(tag);
 					const tagEl = new TagEl(tag, "plus", this.prefix("tag"));
+
+					// Add tag in search on click
+					// 
+					// FIXME: Add exlude and when Ctrl is pressed
 					tagEl.el.addEventListener("click", (event) => {
 						event.stopPropagation();
 						this.addTag(tag);
+					});
+
+					// Show context menu on right click
+					tagEl.el.addEventListener("contextmenu", (event) => {
+						event.preventDefault();
+						event.stopPropagation();
+
+						new Menu()
+							.addItem(item => {
+								item
+									.setTitle("Include")
+									.setIcon("squares-intersect")
+									.onClick(() => { this.addTag(tag); })
+							})
+							.addItem(item => {
+								item
+									.setTitle("Exclude")
+									.setIcon("squares-exclude")
+									// FIXME: onclick
+							})
+							.showAtMouseEvent(event);
 					});
 
 					// If among the selected tags there is a more general tag than the one
