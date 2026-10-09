@@ -4,6 +4,7 @@ import { highlightMatches } from "./utils";
 import { createDebounce } from "./debounce";
 
 export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
+    private suggestEl!: HTMLElement;
     private debouncedGetItems = createDebounce(
         (query: string): TagSuggestion[] => { return this.getItems(query); }
     );
@@ -15,11 +16,25 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         private readonly onTagSelected: (tag: string, exclude: boolean) => void
     ) {
         super(app, textInputEl);
-        this.onSelect((value) => {
-            const exclude = this.getValue().startsWith("!");
-            this.onTagSelected(value.name, exclude);
+
+        this.onSelect((value, event) => {
+            const inlineExclude = this.getValue().startsWith("!");
+            this.onTagSelected(value.name, inlineExclude || event.ctrlKey);
         });
 
+        // Ctrl + Enter = Add exclude tag
+        this.scope.register(["Ctrl"], "Enter", () => {
+            const selected = this.getSelected();
+            if (!selected) return false;
+            this.onTagSelected(selected, true);
+            return false;
+		});
+    }
+
+    private getSelected(): string | undefined {
+        const selectedEl = this.suggestEl
+            .querySelector(".suggestion-item.is-selected") as HTMLElement;
+        return selectedEl?.dataset?.tagScopeSuggestionId;
     }
 
     protected async getSuggestions(query: string): Promise<TagSuggestion[]> {
@@ -27,6 +42,7 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
     }
 
     renderSuggestion(value: TagSuggestion, el: HTMLElement): void {
+        el.dataset.tagScopeSuggestionId = value.name;
         const wrapper = el.createDiv("tag-scope-suggestion");
         const nameEl = wrapper.createSpan({ cls: "tag-scope-suggestion-name" });
         
