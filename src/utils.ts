@@ -1,4 +1,5 @@
 import { App, TFile, Notice, SearchMatchPart } from "obsidian";
+import { TagFilter } from "./types";
 
 export async function openNote(
     app: App,
@@ -70,4 +71,11 @@ export function highlightMatches(
             )
         );
     }
+}
+
+export function isTagSelected(
+    tag: string,
+    selectedTags: TagFilter[]
+): boolean {
+    return selectedTags.some(selectedTag => selectedTag.name === tag);
 }

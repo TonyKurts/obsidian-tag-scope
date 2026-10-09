@@ -3,7 +3,6 @@ import { getClasses, highlightMatches } from "./utils";
 
 export class TagEl {   
     readonly name: string;
-
     readonly el: HTMLElement;
     readonly nameEl: HTMLSpanElement;
     

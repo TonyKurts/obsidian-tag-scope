@@ -1,19 +1,19 @@
+import type { FilteredNote, Note, TagFilter } from "./types";
 import { App, Modal, setIcon, Menu } from "obsidian";
 import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
-import { openNote, getDirName, highlightMatches } from "./utils";
+import { openNote, isTagSelected } from "./utils";
 import { TagEl } from "./TagEl";
 import { TagSuggest } from "./TagSuggest";
-import type { FilteredNote, Note, TagFilter } from "./types";
 import { createDebounce } from "./debounce";
+import { SearchResultsView } from "./SearchResultsView";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
 	private filtered: FilteredNote[] = [];
-	private availableTags: Set<string> = new Set();
 	private selectedTags: TagFilter[] = [];
-	private selectedIndex: number = 0;
-	private enableMouseSelection: boolean = false;
-	private lastEmptyBackspaceAt: number = 0;
+	private selectedIndex = 0;
+	private enableMouseSelection = false;
+	private lastEmptyBackspaceAt = 0;
 
 	private readonly debouncedRefresh = createDebounce(
 		() => this.refreshResults()
@@ -22,12 +22,12 @@ export class SearchModal extends Modal {
 	// HTML
 	private fileInputEl!: HTMLInputElement;
 	private selectedTagsEl!: HTMLElement;
-	private resultsEl!: HTMLElement;
 	private noteCounterEl!: HTMLElement;
 	private tagCounterEl!: HTMLElement;
 
 	// Components
-	private tagSuggest!: TagSuggest;
+	private tagSuggest: TagSuggest;
+	private searchResultsView: SearchResultsView;
 
 	constructor(
 		app: App,
@@ -87,8 +87,27 @@ export class SearchModal extends Modal {
 			(tag, exclude) => this.addTag(tag, exclude)
 		);
 
-		// Results: filtered notes
-		this.resultsEl = this.modalEl.createDiv("prompt-results");
+		this.searchResultsView = new SearchResultsView(
+			this.modalEl.createDiv("prompt-results"),
+			{
+				onRowMouseEnter: (index) => {
+					if (!this.enableMouseSelection) return;
+					this.selectRow(index, false);
+				},
+				// Enable mouse selection on move
+				onRowMouseMove: (index) => {
+					if (this.enableMouseSelection) return;
+					this.enableMouseSelection = true;
+					this.selectRow(index, false);
+				},
+				onOpenNote: (note, newTab) => {
+					this.openNote(note, newTab);
+				},
+				onTagAdd: (tag, exclude) => {
+					this.addTag(tag, exclude);
+				},
+			}
+		);
 
 		// Instructions & Info
 		const infoEl = this.modalEl.createDiv(this.prefix("info"));
@@ -177,37 +196,32 @@ export class SearchModal extends Modal {
 		
 		// Open (current tab)
 		this.scope.register([], "Enter", () => {
-			this.openNote(this.currentNote, false);
+			if (this.currentNote) {
+				this.openNote(this.currentNote, false);
+			}
 			return false;
 		});
 
 		// Open (new tab)
 		this.scope.register(["Ctrl"], "Enter", () => {
-			this.openNote(this.currentNote, true);
+			if (this.currentNote) {
+				this.openNote(this.currentNote, true);
+			}
 			return false;
 		});
 
 		// Open (new tab) / macOS
 		this.scope.register(["Meta"], "Enter", () => {
-			this.openNote(this.currentNote, true);
+			if (this.currentNote) {
+				this.openNote(this.currentNote, true);
+			}
 			return false;
 		});
-	}
-
-	private get rows(): Element[] {
-		return Array.from(this.resultsEl.children);
 	}
 
 	private get currentNote(): Note {
 		return this.filtered[this.selectedIndex]!;
 	}
-
-	// Is the passed tag in the list of already selected ones?
-	private isTagSelected(tag: string) {
-		return Boolean(this.selectedTags.find(
-			selectedTag => selectedTag.name === tag
-		));
-	};
 
 	private invertTag(tag: TagFilter) {
 		tag.exclude = !tag.exclude;
@@ -216,7 +230,7 @@ export class SearchModal extends Modal {
 	}
 
 	private addTag(tag: string, exclude = false) {
-		if (this.isTagSelected(tag)) return;
+		if (isTagSelected(tag, this.selectedTags)) return;
 		
 		this.selectedTags.push({
 			name: tag,
@@ -242,34 +256,18 @@ export class SearchModal extends Modal {
 
 	// Set highlight to selected row
 	private selectRow(index: number, scroll = true) {
-		const rows = this.rows;
-		if (rows.length === 0) return;
-		
-		// Set correct index
-		this.selectedIndex = Math.max(0, Math.min(index, rows.length - 1));
-		
-		// Highlight selected row and turn off the rest
-		rows.forEach((row, index) => {
-			row.classList.toggle(
-				"is-selected",
-				index === this.selectedIndex
-			);
-		});
-
-		// Scroll container to selected row
-		if (scroll) {
-			rows[this.selectedIndex]?.scrollIntoView({
-				block: "nearest",
-			});
-		}
+		const length = this.filtered.length;
+		if (length === 0) return;
+		this.selectedIndex = Math.max(0, Math.min(index, length - 1));
+		this.searchResultsView.selectRow(this.selectedIndex, scroll);
 	}
 	
 	// Move selection to delta rows
 	private moveSelection(delta = 0): void {
-		const rows = this.rows;
-		if (rows.length === 0) return;
+		const length = this.filtered.length;
+		if (!length) return;
 		this.selectRow(
-			(this.selectedIndex + delta + rows.length) % rows.length
+			(this.selectedIndex + delta + length) % length
 		);
 	}
 
@@ -336,10 +334,9 @@ export class SearchModal extends Modal {
 	}
 
 	private refreshResults() {
-		this.resultsEl.empty();
 		this.selectedIndex = 0;
 		this.tagSuggest.setValue("");
-		this.availableTags.clear();
+		this.enableMouseSelection = false;
 
         this.filtered = filterNotes(
 			this.notes,
@@ -347,115 +344,20 @@ export class SearchModal extends Modal {
 			this.fileInputEl.value
 		);
 
-        this.filtered.forEach((note, index) => {
-            const rowEl = this.resultsEl.createDiv({
-				cls: [
-					this.prefix("result"),
-					"suggestion-item",
-					"mod-complex"
-				]
-			});
-
-			// Move (mouse)
-			rowEl.addEventListener("mouseenter", () => {
-				if (!this.enableMouseSelection) return;
-				this.selectRow(index, false);
-			});
-
-			// Enable mouse selection on move
-			rowEl.addEventListener("mousemove", () => {
-				if (this.enableMouseSelection) return;
-				this.enableMouseSelection = true;
-				this.selectRow(index, false);
-			});
-
-			// Open (mouse)
-			rowEl.addEventListener("click", (event) => {
-				const openInNewTab = event.ctrlKey || event.metaKey;
-				this.openNote(note, openInNewTab);
-			});
-
-			// Note name
-            const nameEl = rowEl.createDiv(this.prefix("result-name"));
-			highlightMatches(nameEl, note.file.basename, note.nameMatches);
-
-			// Note path
-			// 
-			// FIXME: It is relevant for the user to see only the path
-			// 		  without the file name, for accuracy, but only if
-			// 		  file name = file name, and the use frontmatter
-			//        as file header setting is not used
-			const path = getDirName(note.file.path);
-			const pathEl = rowEl.createDiv(this.prefix("result-path"));
-			highlightMatches(pathEl, path, note.pathMatches);
-
-			// Note tags. Display only those tags that have not yet been
-			// selected in the search
-			const tagsEl = rowEl.createDiv(this.prefix("result-tags"));
-			
-			note.tags
-				.filter(tag => !this.isTagSelected(tag))
-				.forEach(tag => {
-					this.availableTags.add(tag);
-					const tagEl = new TagEl(tag, "plus", this.prefix("tag"));
-
-					// Add tag in search on click (include/exclude)
-					tagEl.el.addEventListener("click", (event) => {
-						event.stopPropagation();
-						this.addTag(tag, event.ctrlKey);
-					});
-
-					// Show context menu on right click
-					tagEl.el.addEventListener("contextmenu", (event) => {
-						event.preventDefault();
-						event.stopPropagation();
-
-						new Menu()
-							.addItem(item => {
-								item
-									.setTitle("Include")
-									.setIcon("squares-intersect")
-									.onClick(() => {
-										this.addTag(tag);
-									})
-							})
-							.addItem(item => {
-								item
-									.setTitle("Exclude")
-									.setIcon("squares-exclude")
-									.onClick(() => {
-										this.addTag(tag, true);
-									})
-							})
-							.showAtMouseEvent(event);
-					});
-
-					// If among the selected tags there is a more general tag than the one
-					// that appears in the note, then the tag in the note receives
-					// additional highlighting to indicate a potential refinement
-					this.selectedTags.forEach(({ name }) => {
-						tagEl.highlightMatch(name);
-					});
-
-					tagsEl.appendChild(tagEl.el);
-				});
-        });
-
-		// Not found label
-		if (this.filtered.length === 0) {
-			this.resultsEl.createDiv({
-				cls: "suggestion-empty",
-				text: "No notes found."
-			});
-		}
-
+		this.searchResultsView.render(this.filtered, this.selectedTags);
 		this.updateCounters();
 		this.moveSelection();
 	}
 
 	private updateCounters(): void {
+		const availableTags = new Set(
+			this.filtered.flatMap(note => 
+				note.tags.filter(tag => !isTagSelected(tag, this.selectedTags))
+			)
+		);
+
+		this.tagCounterEl.innerText = availableTags.size.toLocaleString();
 		this.noteCounterEl.innerText = this.filtered.length.toLocaleString();
-		this.tagCounterEl.innerText = this.availableTags.size.toLocaleString();
 	}
 
 	private reloadData() {
