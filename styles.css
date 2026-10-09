@@ -18,7 +18,6 @@
 
     display: flex;
     flex-direction: column;
-    align-content: flex-start;
 
     /* Gap between `selected-tags` and `input` */
     gap: var(--size-4-3);
@@ -49,12 +48,6 @@
     border: none;
     border-radius: 0;
     border-bottom: var(--border-width) solid var(--background-secondary);
-
-    &:hover {
-        background-color: var(--background-modifier-form-field-hover);
-        border-color: var(--background-modifier-border-hover);
-        transition: box-shadow var(--anim-duration-fast) ease-in-out, border var(--anim-duration-fast) ease-in-out;
-    }
 }
 
 .tag-scope-selected-tags {
