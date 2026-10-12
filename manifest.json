@@ -2,7 +2,7 @@
 	"id": "tag-scope",
 	"name": "Tag Scope",
 	"version": "1.0.0",
-	"minAppVersion": "1.4.10",
+	"minAppVersion": "1.13.0",
 	"description": "Search notes through progressive tag filtering.",
 	"author": "TonyKurts",
 	"authorUrl": "https://github.com/TonyKurts",

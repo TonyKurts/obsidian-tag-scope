@@ -1,10 +1,15 @@
 import { Plugin } from "obsidian";
 import { SearchModal } from "./SearchModal";
+import { DEFAULT_SETTINGS, TagScopeSettings, TagScopeSettingsTab } from "./settings";
 
 export default class TagScopePlugin extends Plugin {
+    settings: TagScopeSettings = { ...DEFAULT_SETTINGS };
     private searchModal: SearchModal | null = null;
 
-    onload() {
+    async onload() {
+        await this.loadSettings();
+        this.addSettingTab(new TagScopeSettingsTab(this.app, this));
+
         this.searchModal = new SearchModal(this.app);
 
         this.addCommand({
@@ -23,5 +28,17 @@ export default class TagScopePlugin extends Plugin {
     onunload() {
         this.searchModal?.close();
         this.searchModal = null;
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign(
+            {},
+            DEFAULT_SETTINGS,
+            await this.loadData() as TagScopeSettings ?? {},
+        );
+    }
+    
+    async saveSettings() {
+        await this.saveData(this.settings);
     }
 }
