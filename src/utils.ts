@@ -1,5 +1,6 @@
 import { App, TFile, Notice, SearchMatchPart } from "obsidian";
 import { TagFilter } from "./types";
+import { PLUGIN_ID } from "./settings";
 
 export async function openNote(
     app: App,
@@ -29,6 +30,10 @@ export function getClasses(classes?: string | string[]): string[] {
     return Array.isArray(classes) ?
         classes :
         classes.split(" ");
+}
+
+export function className(name: string): string {
+    return `${PLUGIN_ID}-${name}`;
 }
 
 export function highlightMatches(

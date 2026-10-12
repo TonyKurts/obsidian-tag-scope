@@ -1,7 +1,7 @@
 import type { FilteredNote, Note, TagFilter } from "./types";
 import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
-import { openNote, isTagSelected } from "./utils";
+import { openNote, isTagSelected, className } from "./utils";
 import { TagSuggest } from "./TagSuggest";
 import { createDebounce } from "./debounce";
 import { SearchResultsView } from "./SearchResultsView";
@@ -31,10 +31,7 @@ export class SearchModal extends Modal {
 	private searchResultsView!: SearchResultsView;
 	private selectedTagsView!: SelectedTagsView;
 
-	constructor(
-		app: App,
-		private readonly prefix: (value: string) => string,
-	) {
+	constructor(app: App) {
 		super(app);
 		this.createLayout();
 		this.registerEvents();
@@ -56,7 +53,7 @@ export class SearchModal extends Modal {
 		this.fileInputEl = fileFieldEl.createEl("input", {
 			type: "text",
 			cls: [
-				this.prefix("file-input"),
+				className("file-input"),
 				"prompt-input"
 			],
 			placeholder: "Find by filename or path...",
@@ -71,9 +68,9 @@ export class SearchModal extends Modal {
 		this.closeBtnEl = fileFieldEl.createDiv("search-input-clear-button");
 
 		// Tag input
-		this.tagFieldEl = this.modalEl.createDiv(this.prefix("tag-field"));
+		this.tagFieldEl = this.modalEl.createDiv(className("tag-field"));
 		this.selectedTagsView = new SelectedTagsView(
-			this.tagFieldEl.createDiv("tag-scope-selected-tags"),
+			this.tagFieldEl.createDiv(className("selected-tags")),
 			{
 				onInvert: (tag) => { this.invertTag(tag); },
 				onRemove: (index) => { this.removeTag(index); },
@@ -82,7 +79,7 @@ export class SearchModal extends Modal {
 
 		this.tagInputEl = this.tagFieldEl.createEl("input", {
 			type: "text",
-			cls: this.prefix("tag-input"),
+			cls: className("tag-input"),
 			placeholder: "Narrow by tags...",
 			attr: {
 				autocapitalize: "off",
@@ -121,15 +118,15 @@ export class SearchModal extends Modal {
 		);
 
 		// Instructions & Info
-		const infoEl = this.modalEl.createDiv(this.prefix("info"));
+		const infoEl = this.modalEl.createDiv(className("info"));
 
 		// Note counter
-		let infoItemEl = infoEl.createDiv(this.prefix("info-item"));
+		let infoItemEl = infoEl.createDiv(className("info-item"));
 		setIcon(infoItemEl, "files");
 		this.noteCounterEl = infoItemEl.createSpan();
 
 		// Tag counter
-		infoItemEl = infoEl.createDiv(this.prefix("info-item"));
+		infoItemEl = infoEl.createDiv(className("info-item"));
 		setIcon(infoItemEl, "tags");
 		this.tagCounterEl = infoItemEl.createSpan();
 	}

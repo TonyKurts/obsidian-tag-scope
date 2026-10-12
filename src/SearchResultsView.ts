@@ -1,6 +1,6 @@
 import type { FilteredNote, Note, TagFilter } from "./types";
 import { Menu } from "obsidian";
-import { highlightMatches, getDirName, isTagSelected } from "./utils";
+import { highlightMatches, getDirName, isTagSelected, className } from "./utils";
 import { TagPillComponent } from "./TagPillComponent";
 
 interface SearchResultsActions {
@@ -45,7 +45,7 @@ export class SearchResultsView {
         // Filtered notes list
         notes.forEach((note, index) => {
             const rowEl = this.container.createDiv({
-                cls: ["tag-scope-result", "suggestion-item", "mod-complex"],
+                cls: [className("result"), "suggestion-item", "mod-complex"],
             });
             this.rowEls.push(rowEl);
 
@@ -68,7 +68,7 @@ export class SearchResultsView {
             });
 
             // Note name
-            const nameEl = rowEl.createDiv("tag-scope-result-name");
+            const nameEl = rowEl.createDiv(className("result-name"));
             highlightMatches(nameEl, note.file.basename, note.nameMatches);
 
             // Note path
@@ -78,18 +78,18 @@ export class SearchResultsView {
             // 		  file name = file name, and the use frontmatter
             //        as file header setting is not used
             const path = getDirName(note.file.path);
-            const pathEl = rowEl.createDiv("tag-scope-result-path");
+            const pathEl = rowEl.createDiv(className("result-path"));
             highlightMatches(pathEl, path, note.pathMatches);
 
             // Note tags
             //
             // Display only those tags
             // that have not yet beenselected in the search
-            const tagsEl = rowEl.createDiv("tag-scope-result-tags");
+            const tagsEl = rowEl.createDiv(className("result-tags"));
             note.tags
                 .filter(noteTag => !isTagSelected(noteTag, selectedTags))
                 .forEach(noteTag => {
-                    const tagPillComponent = new TagPillComponent(noteTag, "plus", "tag-scope-tag");
+                    const tagPillComponent = new TagPillComponent(noteTag, "plus", className("tag"));
 
                     // On click (include/exclude)
                     tagPillComponent.el.addEventListener("click", event => {

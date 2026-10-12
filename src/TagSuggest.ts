@@ -1,6 +1,6 @@
 import { App, AbstractInputSuggest } from "obsidian";
 import { TagSuggestion } from "./types";
-import { highlightMatches } from "./utils";
+import { highlightMatches, className } from "./utils";
 import { createDebounce } from "./debounce";
 
 export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
@@ -43,15 +43,15 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
 
     renderSuggestion(value: TagSuggestion, el: HTMLElement): void {
         el.dataset.tagScopeSuggestionId = value.name;
-        const wrapper = el.createDiv("tag-scope-suggestion");
-        const nameEl = wrapper.createSpan({ cls: "tag-scope-suggestion-name" });
+        const wrapper = el.createDiv(className("suggestion"));
+        const nameEl = wrapper.createSpan({ cls: className("suggestion-name") });
         
         // Highlight part of the name for ease of working with fuzzy search
         highlightMatches(nameEl, value.name, value.matches);
 
         // Frequency of occurrence of this tag among a sample of notes
         wrapper.createSpan({
-            cls: "tag-scope-suggestion-count",
+            cls: className("suggestion-count"),
             text: value.count.toLocaleString()
         })
     }

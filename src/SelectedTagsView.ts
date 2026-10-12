@@ -1,5 +1,6 @@
 import { Menu } from "obsidian";
 import { TagFilter } from "./types";
+import { className } from "./utils";
 import { TagPillComponent } from "./TagPillComponent";
 
 interface SelectedTagsActions {
@@ -20,8 +21,8 @@ export class SelectedTagsView {
 				tag.name,
 				"x",
 				[
-					"tag-scope-tag",
-					tag.exclude ? "tag-scope-tag-exclude" : ""
+					className("tag"),
+					tag.exclude ? className("tag-exclude") : ""
 				]
 				
 			);
