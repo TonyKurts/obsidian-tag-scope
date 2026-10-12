@@ -1,20 +1,9 @@
-import type { TFile, SearchMatchPart, SearchResult } from "obsidian";
-
-export interface TagSuggestion {
-    name: string;
-    count: number;
-    matches: SearchMatchPart[];
-};
+import type { TFile, SearchMatchPart } from "obsidian";
 
 export interface Note {
     file: TFile;
     tags: string[];
 };
-
-export interface TagFilter {
-    name: string,
-    exclude: boolean
-}
 
 export interface FilteredNote extends Note {
     nameMatches: SearchMatchPart[];
@@ -22,8 +11,13 @@ export interface FilteredNote extends Note {
     score: number;
 };
 
-export type FuzzySearchHandler = (text: string) => SearchResult | null;
-export type FuzzySearchResult = {
-    matches: SearchMatchPart[][],
-    score: number
-} | null;
+export interface TagFilter {
+    name: string,
+    exclude: boolean
+}
+
+export interface TagSuggestion {
+    name: string;
+    count: number;
+    matches: SearchMatchPart[];
+};

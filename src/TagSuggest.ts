@@ -5,7 +5,7 @@ import { createDebounce } from "./debounce";
 
 export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
     private excludeMode = false;
-
+    
     private suggestEl!: HTMLElement;
     private debouncedGetItems = createDebounce(
         (query: string): TagSuggestion[] => { return this.getItems(query); }

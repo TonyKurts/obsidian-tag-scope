@@ -1,6 +1,7 @@
-import { App, getAllTags, prepareFuzzySearch, SearchMatchPart } from "obsidian";
+import type { Note, TagSuggestion, FilteredNote, TagFilter } from "./types";
+import { App, getAllTags, SearchMatchPart } from "obsidian";
 import { getDirName } from "./utils";
-import type { Note, TagSuggestion, FilteredNote, FuzzySearchHandler, FuzzySearchResult, TagFilter } from "./types";
+import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 
 export function getAllNotes(app: App): Note[] {
 	return app.vault.getMarkdownFiles().map((file) => {
@@ -73,51 +74,6 @@ export function filterNotes(
 		})
 		.filter(note => note !== null)
 		.sort((noteA, noteB) => noteB.score - noteA.score);
-	}
-}
-
-function prepareSplitFuzzySearch(query: string): FuzzySearchHandler[] {
-		return query
-			.split(/\s+/)
-			.map(word => prepareFuzzySearch(word));
-	}
-
-function splitFuzzySearch(
-	searchers: FuzzySearchHandler[],
-	...texts: string[]
-): FuzzySearchResult {
-	const results = searchers.map(search => {
-		return texts.map(text => {
-			return search(text);
-		});
-	});
-
-	const textsCount = texts.length;
-	const totalMathes: SearchMatchPart[][] = [];
-	let totalScore: number = 0;
-
-	for (let textIndex = 0; textIndex < textsCount; textIndex++) {
-		const matches: SearchMatchPart[] = [];
-		const scores: number[] = [];
-
-		for (const result of results) {
-			if (result.every(word => word == null)) return null;
-			
-			const resultByText = result[textIndex];
-			
-			if (resultByText) {
-				matches.push(...resultByText.matches);
-				scores.push(resultByText.score);
-			}
-		}
-
-		totalMathes.push(matches);
-		totalScore += Math.max(...scores);
-	}
-
-	return {
-		matches: totalMathes,
-		score: totalScore
 	}
 }
 
