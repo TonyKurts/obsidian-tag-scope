@@ -59,9 +59,9 @@ export function highlightMatches(
         }
 
         // Text FROM and TO must be highlighted
-        const strongEl = createEl("strong");
-        strongEl.textContent = text.slice(from, to);
-        container.append(strongEl);
+        const highlightEl = createSpan(className("highlight"));
+        highlightEl.textContent = text.slice(from, to);
+        container.append(highlightEl);
 
         // It makes sense to work only from the last point TO
         cursor = to;

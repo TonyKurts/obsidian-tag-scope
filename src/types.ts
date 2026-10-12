@@ -20,4 +20,5 @@ export interface TagSuggestion {
     name: string;
     count: number;
     matches: SearchMatchPart[];
+    score: number;
 };

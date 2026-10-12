@@ -195,3 +195,13 @@ input[type="text"].tag-scope-tag-input {
 .tag-scope-suggestion-count {
     opacity: 0.6;
 }
+
+/*
+#
+# Highlights
+#
+*/
+.tag-scope-highlight {
+    text-decoration: underline;
+    font-weight: bolder;
+}

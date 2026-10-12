@@ -1,5 +1,5 @@
-import type { Note, TagSuggestion, FilteredNote, TagFilter } from "./types";
-import { App, getAllTags, SearchMatchPart } from "obsidian";
+import type { Note, FilteredNote, TagFilter } from "./types";
+import { App, getAllTags } from "obsidian";
 import { getDirName } from "./utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 
@@ -75,88 +75,4 @@ export function filterNotes(
 		.filter(note => note !== null)
 		.sort((noteA, noteB) => noteB.score - noteA.score);
 	}
-}
-
-export function getTagSuggestions(
-	notes: Note[],
-	selected: TagFilter[],
-	query: string
-): TagSuggestion[] {
-	const searches = prepareSplitFuzzySearch(query);
-	const suggestions = new Map<
-		string,
-		{
-			count: number;
-			score: number;
-			matches: SearchMatchPart[];
-		}
-	>();
-
-	notes.forEach(note => {
-		// The same tag should only be counted once per note
-		const noteTags = new Set<string>();
-
-		// For #project/plugin also add #project
-		note.tags.forEach(tag => {
-			const parts = tag.split("/");
-			for (let depth = 1; depth <= parts.length; depth++) {
-				noteTags.add(parts.slice(0, depth).join("/"));
-			}
-		});
-
-		noteTags.forEach(tag => {
-			if (selected.some(
-				({name}) =>
-					tag === name ||
-					name.startsWith(`${tag}/`)
-			)) return;
-
-			const search = splitFuzzySearch(searches, tag);
-			if (!search) return;
-			
-			const previous = suggestions.get(tag);
-
-			// How many times this tag appears among the selected notes
-			suggestions.set(
-				tag, {
-					count: (previous?.count ?? 0) + 1,
-					score: Math.max(previous?.score ?? 0, search.score),
-					matches: previous?.matches ?? search.matches[0] ?? []
-				}
-			);
-		});
-	});
-
-	const entries = [...suggestions.entries()];
-	return entries
-		.filter(([parent, meta]) => {
-			// Collect only immediate children, excluding deeper descendants
-			const children = entries.filter(([tag]) =>
-				tag.startsWith(`${parent}/`) &&
-				!tag.slice(parent.length + 1). includes("/")
-			);
-
-			// Keep a parent when it has multiple immediate child tags
-			const hasSeveralChildren = children.length > 1;
-
-			// Also keep it when its count differs from the combined counts of its children
-			const hasDifferentCount =
-				meta.count !==
-				children.reduce(
-					(acc, [, childMeta]) => acc + childMeta.count, 0
-				);
-
-			// Retain the parent if either condition makes it useful as a suggestion
-			return hasSeveralChildren || hasDifferentCount;
-		})
-		.sort(
-			([tagA, valueA], [tagB, valueB]) => 
-				valueB.score - valueA.score ||
-				tagA.localeCompare(tagB)
-		)
-		.map(([name, value]) => ({
-			name,
-			count: value.count,
-			matches: value.matches
-		}));
 }
