@@ -1,5 +1,6 @@
 import type { Note, TagSuggestion, TagFilter } from "./types";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
+import { TagSuggestionSortOrder } from "./settings";
 
 // Returns a tag and all its parent tags.
 // For example, "project/plugin" becomes ["project", "project/plugin"].
@@ -30,6 +31,7 @@ export function getTagSuggestions(
 	notes: Note[],
 	selected: TagFilter[],
 	query: string,
+	sortOrder: TagSuggestionSortOrder
 ): TagSuggestion[] {
 	const searches = prepareSplitFuzzySearch(query);
 	const counts = new Map<string, number>();
@@ -69,8 +71,11 @@ export function getTagSuggestions(
 
 			return hasUsefulParentCount(parentTag.count, children);
 		})
-		.sort((tagA, tagB) =>
-			tagB.score - tagA.score ||
-			tagA.name.localeCompare(tagB.name)
-		)
+		.sort((a, b) => {
+			if (sortOrder === "popularity") {
+				return b.count - a.count || a.name.localeCompare(b.name);
+			}
+
+			return a.name.localeCompare(b.name);
+		});
 }

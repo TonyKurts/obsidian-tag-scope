@@ -9,8 +9,8 @@ export default class TagScopePlugin extends Plugin {
     async onload() {
         await this.loadSettings();
         this.addSettingTab(new TagScopeSettingsTab(this.app, this));
-
-        this.searchModal = new SearchModal(this.app);
+        
+        this.searchModal = new SearchModal(this.app, this.settings);
 
         this.addCommand({
             id: "open-search",

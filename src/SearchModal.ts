@@ -7,6 +7,7 @@ import { TagSuggest } from "./TagSuggest";
 import { createDebounce } from "./debounce";
 import { SearchResultsView } from "./SearchResultsView";
 import { SelectedTagsView } from "./SelectedTagsView";
+import { TagScopeSettings } from "./settings";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
@@ -32,7 +33,10 @@ export class SearchModal extends Modal {
 	private searchResultsView!: SearchResultsView;
 	private selectedTagsView!: SelectedTagsView;
 
-	constructor(app: App) {
+	constructor(
+		app: App,
+		private settings: TagScopeSettings
+	) {
 		super(app);
 		this.createLayout();
 		this.registerEvents();
@@ -95,7 +99,8 @@ export class SearchModal extends Modal {
 			(query) => getTagSuggestions(
 				this.filtered,
 				this.selectedTags,
-				query
+				query,
+				this.settings.tagSuggestionSortOrder
 			),
 			(tag, exclude) => this.addTag(tag, exclude)
 		);
