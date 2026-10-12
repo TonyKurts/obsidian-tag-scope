@@ -20,7 +20,7 @@
     flex-direction: column;
 
     /* Gap between `selected-tags` and `input` */
-    gap: var(--size-4-3);
+    gap: var(--size-4-2);
     
     /* Base height + padding above and below */
     min-height: calc(var(--tag-field-row-height) + var(--size-4-2) * 2);
@@ -33,7 +33,7 @@
     */
     max-height: calc(
         (var(--tag-field-row-height) + var(--size-2-2))
-        * 4 + var(--size-4-3) - var(--size-2-2)
+        * 4 + var(--size-4-2) - var(--size-2-2)
     );
 
     overflow-y: auto;

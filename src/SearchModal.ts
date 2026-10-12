@@ -1,11 +1,11 @@
 import type { FilteredNote, Note, TagFilter } from "./types";
-import { App, Modal, setIcon, Menu } from "obsidian";
+import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes, getTagSuggestions } from "./search";
 import { openNote, isTagSelected } from "./utils";
-import { TagEl } from "./TagEl";
 import { TagSuggest } from "./TagSuggest";
 import { createDebounce } from "./debounce";
 import { SearchResultsView } from "./SearchResultsView";
+import { SelectedTagsView } from "./SelectedTagsView";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
@@ -20,14 +20,15 @@ export class SearchModal extends Modal {
 	);
 
 	// HTML
+	private tagFieldEl!: HTMLElement;
 	private fileInputEl!: HTMLInputElement;
-	private selectedTagsEl!: HTMLElement;
 	private noteCounterEl!: HTMLElement;
 	private tagCounterEl!: HTMLElement;
 
 	// Components
 	private tagSuggest: TagSuggest;
 	private searchResultsView: SearchResultsView;
+	private selectedTagsView: SelectedTagsView;
 
 	constructor(
 		app: App,
@@ -60,11 +61,17 @@ export class SearchModal extends Modal {
 		const closeBtnEl = fileFieldEl.createDiv("search-input-clear-button");
 
 		// Tag input
-		const tagFieldEl = this.modalEl.createDiv(this.prefix("tag-field"));
+		this.tagFieldEl = this.modalEl.createDiv(this.prefix("tag-field"));
+		this.selectedTagsView = new SelectedTagsView(
+			this.tagFieldEl.createDiv("tag-scope-selected-tags"),
+			{
+				onInvert: (tag) => { this.invertTag(tag); },
+				onRemove: (index) => { this.removeTag(index); },
+			}
+		);
+
 		
-		this.selectedTagsEl = tagFieldEl.createDiv(this.prefix("selected-tags"));
-		
-		const tagInputEl = tagFieldEl.createEl("input", {
+		const tagInputEl = this.tagFieldEl.createEl("input", {
 			type: "text",
 			cls: this.prefix("tag-input"),
 			placeholder: "Narrow by tags...",
@@ -149,7 +156,7 @@ export class SearchModal extends Modal {
 		});
 
 		// Focus on tagInputEl when click on tagFieldEl
-		tagFieldEl.addEventListener("click", (event) => {
+		this.tagFieldEl.addEventListener("click", (event) => {
 			if (event.target !== tagInputEl) {
 				tagInputEl.focus();
 			}
@@ -225,7 +232,7 @@ export class SearchModal extends Modal {
 
 	private invertTag(tag: TagFilter) {
 		tag.exclude = !tag.exclude;
-		this.renderSelectedTags();
+		this.updateTagsView();
 		this.refreshResults();
 	}
 
@@ -238,7 +245,7 @@ export class SearchModal extends Modal {
 		});
 
 		this.tagSuggest.close();
-		this.renderSelectedTags();
+		this.updateTagsView();
 		this.refreshResults();
 	}
 
@@ -246,12 +253,16 @@ export class SearchModal extends Modal {
 	// If no index is specified, the last tag is removed
 	private removeTag(index?: number) {
 		if (this.selectedTags.length === 0) return;
-		
 		if (index == null) this.selectedTags.pop();
 		else this.selectedTags.splice(index, 1);
-
-		this.renderSelectedTags();
+		this.updateTagsView();
 		this.refreshResults();
+	}
+
+	private updateTagsView() {
+		this.selectedTagsView.render(this.selectedTags);
+		this.tagFieldEl.scrollTop = this.tagFieldEl.scrollHeight;
+		this.tagSuggest.setValue("");
 	}
 
 	// Set highlight to selected row
@@ -275,8 +286,9 @@ export class SearchModal extends Modal {
 		// Remove previous selected tags
 		this.selectedTags = [];
 		this.fileInputEl.value = "";
-		this.renderSelectedTags();
 		this.reloadData();
+		this.updateTagsView();
+		this.refreshResults();
 	}
 
     onClose() {
@@ -289,53 +301,8 @@ export class SearchModal extends Modal {
         this.close();
     }
 
-	private renderSelectedTags(): void {
-		this.selectedTagsEl.empty();
-		this.selectedTags.forEach((tag, index) => {
-			const tagEl = new TagEl(
-				tag.name,
-				"x",
-				[
-					this.prefix("tag"),
-					tag.exclude ? this.prefix("tag-exclude") : ""
-				]
-				
-			);
-			
-			tagEl.el.addEventListener("click", (event) => {
-				event.stopPropagation();
-				if (event.ctrlKey) this.invertTag(tag);
-				else this.removeTag(index);
-			});
-
-			// Show context menu on right click
-			tagEl.el.addEventListener("contextmenu", (event) => {
-				event.preventDefault();
-				event.stopPropagation();
-
-				new Menu()
-					.addItem(item => {
-						item
-							.setTitle("Invert")
-							.setIcon("arrow-left-right")
-							.onClick(() => { this.invertTag(tag); })
-					})
-					.addItem(item => {
-						item
-							.setTitle("Remove")
-							.setIcon("x")
-							.onClick(() => { this.removeTag(index); })
-					})
-					.showAtMouseEvent(event);
-			});
-
-			this.selectedTagsEl.appendChild(tagEl.el);
-		});
-	}
-
 	private refreshResults() {
 		this.selectedIndex = 0;
-		this.tagSuggest.setValue("");
 		this.enableMouseSelection = false;
 
         this.filtered = filterNotes(
@@ -362,6 +329,5 @@ export class SearchModal extends Modal {
 
 	private reloadData() {
 		this.notes = getAllNotes(this.app);
-		this.refreshResults();
 	}
 }

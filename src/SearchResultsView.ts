@@ -1,4 +1,4 @@
-import type { FilteredNote, TagFilter } from "./types";
+import type { FilteredNote, Note, TagFilter } from "./types";
 import { Menu } from "obsidian";
 import { highlightMatches, getDirName, isTagSelected } from "./utils";
 import { TagEl } from "./TagEl";
@@ -6,7 +6,7 @@ import { TagEl } from "./TagEl";
 interface SearchResultsActions {
     onRowMouseEnter(index: number): void;
     onRowMouseMove(index: number): void;
-    onOpenNote(note: FilteredNote, newTab: boolean): void;
+    onOpenNote(note: Note, newTab: boolean): void;
     onTagAdd(tag: string, exclude: boolean): void;
 }
 
