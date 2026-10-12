@@ -13,29 +13,39 @@ export class SearchModal extends Modal {
 	private selectedTags: TagFilter[] = [];
 	private selectedIndex = 0;
 	private enableMouseSelection = false;
-	private lastEmptyBackspaceAt = 0;
 
 	private readonly debouncedRefresh = createDebounce(
 		() => this.refreshResults()
 	);
 
 	// HTML
+	private closeBtnEl!: HTMLElement;
 	private tagFieldEl!: HTMLElement;
+	private tagInputEl!: HTMLInputElement;
 	private fileInputEl!: HTMLInputElement;
 	private noteCounterEl!: HTMLElement;
 	private tagCounterEl!: HTMLElement;
 
 	// Components
-	private tagSuggest: TagSuggest;
-	private searchResultsView: SearchResultsView;
-	private selectedTagsView: SelectedTagsView;
+	private tagSuggest!: TagSuggest;
+	private searchResultsView!: SearchResultsView;
+	private selectedTagsView!: SelectedTagsView;
 
 	constructor(
 		app: App,
 		private readonly prefix: (value: string) => string,
 	) {
 		super(app);
-		
+		this.createLayout();
+		this.registerEvents();
+		this.registerKeybindings();
+	}
+
+	private get currentNote(): Note | undefined {
+		return this.filtered[this.selectedIndex];
+	}
+
+	private createLayout() {
 		// General modal settings
 		this.modalEl.empty();
 		this.modalEl.removeClass("modal");
@@ -57,8 +67,8 @@ export class SearchModal extends Modal {
 			}
 		});
 
-		// Close button
-		const closeBtnEl = fileFieldEl.createDiv("search-input-clear-button");
+		// Modal close button
+		this.closeBtnEl = fileFieldEl.createDiv("search-input-clear-button");
 
 		// Tag input
 		this.tagFieldEl = this.modalEl.createDiv(this.prefix("tag-field"));
@@ -70,8 +80,7 @@ export class SearchModal extends Modal {
 			}
 		);
 
-		
-		const tagInputEl = this.tagFieldEl.createEl("input", {
+		this.tagInputEl = this.tagFieldEl.createEl("input", {
 			type: "text",
 			cls: this.prefix("tag-input"),
 			placeholder: "Narrow by tags...",
@@ -84,13 +93,12 @@ export class SearchModal extends Modal {
 
 		this.tagSuggest = new TagSuggest(
 			this.app,
-			tagInputEl,
-			(query) =>
-				getTagSuggestions(
-					this.filtered,
-					this.selectedTags,
-					query
-				),
+			this.tagInputEl,
+			(query) => getTagSuggestions(
+				this.filtered,
+				this.selectedTags,
+				query
+			),
 			(tag, exclude) => this.addTag(tag, exclude)
 		);
 
@@ -98,21 +106,17 @@ export class SearchModal extends Modal {
 			this.modalEl.createDiv("prompt-results"),
 			{
 				onRowMouseEnter: (index) => {
-					if (!this.enableMouseSelection) return;
-					this.selectRow(index, false);
+					if (this.enableMouseSelection) this.selectRow(index, false);
 				},
 				// Enable mouse selection on move
 				onRowMouseMove: (index) => {
-					if (this.enableMouseSelection) return;
-					this.enableMouseSelection = true;
-					this.selectRow(index, false);
+					if (!this.enableMouseSelection) {
+						this.enableMouseSelection = true;
+						this.selectRow(index, false);
+					}
 				},
-				onOpenNote: (note, newTab) => {
-					this.openNote(note, newTab);
-				},
-				onTagAdd: (tag, exclude) => {
-					this.addTag(tag, exclude);
-				},
+				onOpenNote: (note, newTab) => { this.openNote(note, newTab); },
+				onTagAdd: (tag, exclude) => { this.addTag(tag, exclude); },
 			}
 		);
 
@@ -128,15 +132,11 @@ export class SearchModal extends Modal {
 		infoItemEl = infoEl.createDiv(this.prefix("info-item"));
 		setIcon(infoItemEl, "tags");
 		this.tagCounterEl = infoItemEl.createSpan();
+	}
 
-		// 
-		// Keybindings & Events
-		//
-
+	private registerEvents() {
 		// Close on button
-		closeBtnEl.addEventListener("click", () => {
-			this.close();
-		});
+		this.closeBtnEl.addEventListener("click", () => { this.close(); });
 
 		// Search on fileinput
 		this.fileInputEl.addEventListener("input", () => {
@@ -144,7 +144,7 @@ export class SearchModal extends Modal {
 		});
 
 		// Cycle input fields focus
-		const inputEls = [tagInputEl, this.fileInputEl];
+		const inputEls = [this.tagInputEl, this.fileInputEl];
 		inputEls.forEach((inputEl, index) => {
 			inputEl.addEventListener("keydown", (event) => {
 				if (event.key != "Tab") return;
@@ -157,36 +157,36 @@ export class SearchModal extends Modal {
 
 		// Focus on tagInputEl when click on tagFieldEl
 		this.tagFieldEl.addEventListener("click", (event) => {
-			if (event.target !== tagInputEl) {
-				tagInputEl.focus();
-			}
+			if (event.target !== this.tagInputEl) { this.tagInputEl.focus(); }
 		});
 
 		// Double `Backspace` on an empty tagInputEl removes
 		// the last selected tag
-		tagInputEl.addEventListener("keydown", (event) => {
+		let lastEmptyBackspaceAt = 0;
+		this.tagInputEl.addEventListener("keydown", (event) => {
 			if (
 				event.key !== "Backspace" ||
-				tagInputEl.value !== ""
+				this.tagInputEl.value !== ""
 			) {
-				this.lastEmptyBackspaceAt = 0;
+				lastEmptyBackspaceAt = 0;
 				return;
 			}
 
 			const now = Date.now();
 			const delay = 500;
 
-			if (now - this.lastEmptyBackspaceAt <= delay) {
+			if (now - lastEmptyBackspaceAt <= delay) {
 				event.preventDefault();
-				this.lastEmptyBackspaceAt = 0;
+				lastEmptyBackspaceAt = 0;
 				this.removeTag();
 				return;
 			}
 
-			this.lastEmptyBackspaceAt = now;
+			lastEmptyBackspaceAt = now;
 		});
+	}
 
-
+	private registerKeybindings() {
 		// Move down
 		this.scope.register([], "ArrowDown", () => {
 			this.enableMouseSelection = false;
@@ -226,10 +226,6 @@ export class SearchModal extends Modal {
 		});
 	}
 
-	private get currentNote(): Note {
-		return this.filtered[this.selectedIndex]!;
-	}
-
 	private invertTag(tag: TagFilter) {
 		tag.exclude = !tag.exclude;
 		this.updateTagsView();
@@ -244,7 +240,6 @@ export class SearchModal extends Modal {
 			exclude
 		});
 
-		this.tagSuggest.close();
 		this.updateTagsView();
 		this.refreshResults();
 	}
@@ -260,9 +255,10 @@ export class SearchModal extends Modal {
 	}
 
 	private updateTagsView() {
+		this.tagSuggest.close();
+		this.tagSuggest.setValue("");
 		this.selectedTagsView.render(this.selectedTags);
 		this.tagFieldEl.scrollTop = this.tagFieldEl.scrollHeight;
-		this.tagSuggest.setValue("");
 	}
 
 	// Set highlight to selected row
@@ -281,20 +277,6 @@ export class SearchModal extends Modal {
 			(this.selectedIndex + delta + length) % length
 		);
 	}
-
-	onOpen() {
-		// Remove previous selected tags
-		this.selectedTags = [];
-		this.fileInputEl.value = "";
-		this.reloadData();
-		this.updateTagsView();
-		this.refreshResults();
-	}
-
-    onClose() {
-        this.debouncedRefresh.cancel();
-  		this.tagSuggest.close();
-    }
 
     private openNote(note: Note, newTab: boolean = false) {
         void openNote(this.app, note.file, newTab);
@@ -330,4 +312,17 @@ export class SearchModal extends Modal {
 	private reloadData() {
 		this.notes = getAllNotes(this.app);
 	}
+
+	onOpen() {
+		this.selectedTags = [];
+		this.fileInputEl.value = "";
+		this.reloadData();
+		this.updateTagsView();
+		this.refreshResults();
+	}
+
+    onClose() {
+        this.debouncedRefresh.cancel();
+  		this.tagSuggest.close();
+    }
 }
