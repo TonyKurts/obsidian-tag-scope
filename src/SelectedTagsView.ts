@@ -1,6 +1,6 @@
 import { Menu } from "obsidian";
 import { TagFilter } from "./types";
-import { TagEl } from "./TagEl";
+import { TagPillComponent } from "./TagPillComponent";
 
 interface SelectedTagsActions {
 	onRemove(index: number): void;
@@ -16,7 +16,7 @@ export class SelectedTagsView {
     render(tags: TagFilter[]) {
         this.container.empty();
         tags.forEach((tag, index) => {
-            const tagEl = new TagEl(
+            const tagPillComponent = new TagPillComponent(
 				tag.name,
 				"x",
 				[
@@ -26,14 +26,14 @@ export class SelectedTagsView {
 				
 			);
 
-            tagEl.el.addEventListener("click", event => {
+            tagPillComponent.el.addEventListener("click", event => {
 				event.stopPropagation();
 				if (event.ctrlKey) this.actions.onInvert(tag);
 				else this.actions.onRemove(index);
 			});
 
             // Show context menu on right click
-			tagEl.el.addEventListener("contextmenu", event => {
+			tagPillComponent.el.addEventListener("contextmenu", event => {
 				event.preventDefault();
 				event.stopPropagation();
 
@@ -53,7 +53,7 @@ export class SelectedTagsView {
 					.showAtMouseEvent(event);
 			});
 
-            this.container.appendChild(tagEl.el);
+            this.container.appendChild(tagPillComponent.el);
         });
 
 

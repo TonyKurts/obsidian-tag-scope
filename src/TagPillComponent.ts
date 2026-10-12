@@ -1,7 +1,7 @@
 import { setIcon, prepareSimpleSearch } from "obsidian";
 import { getClasses, highlightMatches } from "./utils";
 
-export class TagEl {   
+export class TagPillComponent {   
     readonly name: string;
     readonly el: HTMLElement;
     readonly nameEl: HTMLSpanElement;

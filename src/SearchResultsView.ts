@@ -1,7 +1,7 @@
 import type { FilteredNote, Note, TagFilter } from "./types";
 import { Menu } from "obsidian";
 import { highlightMatches, getDirName, isTagSelected } from "./utils";
-import { TagEl } from "./TagEl";
+import { TagPillComponent } from "./TagPillComponent";
 
 interface SearchResultsActions {
     onRowMouseEnter(index: number): void;
@@ -89,16 +89,16 @@ export class SearchResultsView {
             note.tags
                 .filter(noteTag => !isTagSelected(noteTag, selectedTags))
                 .forEach(noteTag => {
-                    const tagEl = new TagEl(noteTag, "plus", "tag-scope-tag");
+                    const tagPillComponent = new TagPillComponent(noteTag, "plus", "tag-scope-tag");
 
                     // On click (include/exclude)
-                    tagEl.el.addEventListener("click", event => {
+                    tagPillComponent.el.addEventListener("click", event => {
                         event.stopPropagation();
                         this.actions.onTagAdd(noteTag, event.ctrlKey);
                     });
 
                     // Context menu on right click
-                    tagEl.el.addEventListener("contextmenu", event => {
+                    tagPillComponent.el.addEventListener("contextmenu", event => {
                         event.preventDefault();
                         event.stopPropagation();
 
@@ -124,10 +124,10 @@ export class SearchResultsView {
                     // that appears in the note, then the tag in the note receives
                     // additional highlighting to indicate a potential refinement
                     selectedTags.forEach(tag => {
-                        tagEl.highlightMatch(tag.name);
+                        tagPillComponent.highlightMatch(tag.name);
                     });
                     
-                    tagsEl.appendChild(tagEl.el);
+                    tagsEl.appendChild(tagPillComponent.el);
                 });
         });
     }
