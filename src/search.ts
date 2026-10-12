@@ -126,10 +126,6 @@ export function getTagSuggestions(
 	selected: TagFilter[],
 	query: string
 ): TagSuggestion[] {
-	if (query.startsWith("!")) {
-		query = query.slice(1);
-	}
-
 	const searches = prepareSplitFuzzySearch(query);
 	const suggestions = new Map<
 		string,

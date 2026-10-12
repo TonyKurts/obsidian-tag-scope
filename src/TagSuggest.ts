@@ -4,6 +4,8 @@ import { highlightMatches, className } from "./utils";
 import { createDebounce } from "./debounce";
 
 export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
+    private excludeMode = false;
+
     private suggestEl!: HTMLElement;
     private debouncedGetItems = createDebounce(
         (query: string): TagSuggestion[] => { return this.getItems(query); }
@@ -18,8 +20,7 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         super(app, textInputEl);
 
         this.onSelect((value, event) => {
-            const inlineExclude = this.getValue().startsWith("!");
-            this.onTagSelected(value.name, inlineExclude || event.ctrlKey);
+            this.onTagSelected(value.name, this.excludeMode || event.ctrlKey);
         });
 
         // Ctrl + Enter = Add exclude tag
@@ -38,7 +39,9 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
     }
 
     protected async getSuggestions(query: string): Promise<TagSuggestion[]> {
-        return (await this.debouncedGetItems.call(query)) ?? [];
+        this.excludeMode = query.startsWith("!");
+        query = this.excludeMode ? query.slice(1) : query;
+        return await this.debouncedGetItems.call(query) || [];
     }
 
     renderSuggestion(value: TagSuggestion, el: HTMLElement): void {
