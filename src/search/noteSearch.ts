@@ -1,6 +1,6 @@
-import type { Note, FilteredNote, TagFilter } from "./types";
+import type { Note, FilteredNote, TagFilter } from "../types";
 import { App, getAllTags } from "obsidian";
-import { getDirName } from "./utils";
+import { getDirName } from "../utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 import { getNoteSortingRules } from "./sorting";
 

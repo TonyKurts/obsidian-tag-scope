@@ -1,5 +1,5 @@
+import type TagScopePlugin from "./main";
 import { App, PluginSettingTab, SettingDefinitionItem } from "obsidian";
-import TagScopePlugin from "./main";
 
 export const PLUGIN_ID = "tag-scope";
 

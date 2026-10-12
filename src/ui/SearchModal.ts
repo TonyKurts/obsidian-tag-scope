@@ -1,13 +1,13 @@
-import type { FilteredNote, Note, TagFilter } from "./types";
+import type { FilteredNote, Note, TagFilter } from "../types";
 import { App, Modal, setIcon } from "obsidian";
-import { getAllNotes, filterNotes } from "./noteSearch";
-import { getTagSuggestions } from "./tagSuggestionsSearch";
-import { openNote, isTagSelected, className } from "./utils";
+import { getAllNotes, filterNotes } from "../search/noteSearch";
+import { getTagSuggestions } from "../search/tagSearch";
+import { openNote, isTagSelected, className } from "../utils";
 import { TagSuggest } from "./TagSuggest";
-import { createDebounce } from "./debounce";
+import { createDebounce } from "../debounce";
 import { SearchResultsView } from "./SearchResultsView";
 import { SelectedTagsView } from "./SelectedTagsView";
-import { TagScopeSettings } from "./settings";
+import { TagScopeSettings } from "../settings";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];

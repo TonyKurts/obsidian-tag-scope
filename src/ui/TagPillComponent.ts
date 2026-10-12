@@ -1,5 +1,5 @@
 import { setIcon } from "obsidian";
-import { getClasses, highlightMatches } from "./utils";
+import { getClasses, highlightMatches } from "../utils";
 
 export class TagPillComponent {   
     readonly name: string;

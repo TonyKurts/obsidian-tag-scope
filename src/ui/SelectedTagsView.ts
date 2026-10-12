@@ -1,6 +1,6 @@
 import { Menu } from "obsidian";
-import { TagFilter } from "./types";
-import { className } from "./utils";
+import { TagFilter } from "../types";
+import { className } from "../utils";
 import { TagPillComponent } from "./TagPillComponent";
 
 interface SelectedTagsActions {

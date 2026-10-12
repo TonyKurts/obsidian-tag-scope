@@ -1,5 +1,5 @@
 import { Plugin } from "obsidian";
-import { SearchModal } from "./SearchModal";
+import { SearchModal } from "./ui/SearchModal";
 import { DEFAULT_SETTINGS, TagScopeSettings, TagScopeSettingsTab } from "./settings";
 
 export default class TagScopePlugin extends Plugin {

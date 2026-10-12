@@ -1,7 +1,7 @@
 import { App, AbstractInputSuggest } from "obsidian";
-import { TagSuggestion } from "./types";
-import { highlightMatches, className } from "./utils";
-import { createDebounce } from "./debounce";
+import { TagSuggestion } from "../types";
+import { highlightMatches, className } from "../utils";
+import { createDebounce } from "../debounce";
 
 export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
     private excludeMode = false;

@@ -1,6 +1,6 @@
-import type { FilteredNote, Note, TagFilter } from "./types";
+import type { FilteredNote, Note, TagFilter } from "../types";
 import { Menu } from "obsidian";
-import { highlightMatches, getDirName, isTagSelected, className } from "./utils";
+import { highlightMatches, getDirName, isTagSelected, className } from "../utils";
 import { TagPillComponent } from "./TagPillComponent";
 
 interface SearchResultsActions {

@@ -1,6 +1,6 @@
-import type { Note, TagSuggestion, TagFilter } from "./types";
+import type { Note, TagSuggestion, TagFilter } from "../types";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
-import { TagSuggestionSortOrder } from "./settings";
+import { TagSuggestionSortOrder } from "../settings";
 import { getTagSuggestionSortingRules } from "./sorting";
 
 // Returns a tag and all its parent tags.

@@ -1,6 +1,6 @@
-import { TagSuggestionSortOrder } from "./settings";
-import { Note, TagSuggestion } from "./types";
-import { getDirName } from "./utils";
+import { TagSuggestionSortOrder } from "../settings";
+import { Note, TagSuggestion } from "../types";
+import { getDirName } from "../utils";
 
 export function getNoteSortingRules(a: Note, b: Note) {
     return {
