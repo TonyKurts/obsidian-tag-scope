@@ -2,6 +2,7 @@ import type { Note, FilteredNote, TagFilter } from "./types";
 import { App, getAllTags } from "obsidian";
 import { getDirName } from "./utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
+import { getNoteSortingRules } from "./sorting";
 
 export function getAllNotes(app: App): Note[] {
 	return app.vault.getMarkdownFiles().map((file) => {
@@ -15,11 +16,10 @@ export function getAllNotes(app: App): Note[] {
 			file,
 			tags: [...new Set(tags)],
 		};
-	}).sort((noteA, noteB) => // Global notes sorting
-		noteA.tags.length - noteB.tags.length ||
-		getDirName(noteA.file.path).localeCompare(getDirName(noteB.file.path)) ||
-		noteA.file.basename.localeCompare(noteB.file.basename)
-	);
+	}).sort((a, b) => { // Global notes sorting
+		const rules = getNoteSortingRules(a, b);
+		return rules.tagsCount || rules.path || rules.name;
+	});
 }
 
 function matchesTagFilters(note: Note, filters: TagFilter[]): boolean {
@@ -75,5 +75,9 @@ export function filterNotes(
 				score: search.score,
 			}];
 		})
-		.sort((noteA, noteB) => noteB.score - noteA.score);
+		.sort((a, b) => {
+			const rules = getNoteSortingRules(a, b);
+			let score = a.score - b.score;
+			return rules.tagsCount || score  || rules.path || rules.name;
+		});
 }

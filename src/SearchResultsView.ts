@@ -124,7 +124,7 @@ export class SearchResultsView {
                     // that appears in the note, then the tag in the note receives
                     // additional highlighting to indicate a potential refinement
                     selectedTags.forEach(tag => {
-                        tagPillComponent.highlightMatch(tag.name);
+                        tagPillComponent.highlightName(tag.name);
                     });
                     
                     tagsEl.appendChild(tagPillComponent.el);

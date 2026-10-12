@@ -1,6 +1,6 @@
 import type { FilteredNote, Note, TagFilter } from "./types";
 import { App, Modal, setIcon } from "obsidian";
-import { getAllNotes, filterNotes } from "./search";
+import { getAllNotes, filterNotes } from "./noteSearch";
 import { getTagSuggestions } from "./tagSuggestionsSearch";
 import { openNote, isTagSelected, className } from "./utils";
 import { TagSuggest } from "./TagSuggest";

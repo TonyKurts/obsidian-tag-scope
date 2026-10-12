@@ -18,7 +18,7 @@ export function splitFuzzySearch(
 	...texts: string[]
 ): FuzzySearchResult {
 	const matchesByText = texts.map((): SearchMatchPart[] => []);
-	const bestScoreByText = texts.map(() => 0);
+	const bestScoreByText = texts.map(() => Number.NEGATIVE_INFINITY);
 
 	for (const search of searchers) {
 		const results = texts.map(text => search(text));
@@ -35,7 +35,7 @@ export function splitFuzzySearch(
 			const matches = matchesByText[textIndex];
 	        const bestScore = bestScoreByText[textIndex];
             if (!matches || bestScore === undefined) return;
-
+			
             matches.push(...result.matches);
             // Keep the best score for this text across all query words
 	        bestScoreByText[textIndex] = Math.max(bestScore, result.score);
@@ -45,6 +45,9 @@ export function splitFuzzySearch(
 	return {
 		matches: matchesByText,
 		// Add the best score from each text, such as the file name and path
-		score: bestScoreByText.reduce((total, score) => total + score, 0),
+		score: bestScoreByText.reduce((total, score) => {
+			if (score === Number.NEGATIVE_INFINITY) return total;
+			else return total - score;
+		}, 0),
 	};
 }

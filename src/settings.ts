@@ -3,14 +3,14 @@ import TagScopePlugin from "./main";
 
 export const PLUGIN_ID = "tag-scope";
 
-export type TagSuggestionSortOrder = "alphabetical" | "popularity";
+export type TagSuggestionSortOrder = "name" | "counter";
 
 export interface TagScopeSettings {
 	tagSuggestionSortOrder: TagSuggestionSortOrder;
 }
 
 export const DEFAULT_SETTINGS: TagScopeSettings = {
-	tagSuggestionSortOrder: "alphabetical",
+	tagSuggestionSortOrder: "name",
 };
 
 export class TagScopeSettingsTab extends PluginSettingTab {
@@ -24,15 +24,15 @@ export class TagScopeSettingsTab extends PluginSettingTab {
 	getSettingDefinitions(): SettingDefinitionItem[] {
 		return [
 			{
-				name: "Tag suggestion sort order",
+				name: "Tag suggestion sort order by",
 				desc: "How tag suggestions are sorted in the input suggestion popup.",
 				control: {
 					type: "dropdown",
 					key: "tagSuggestionSortOrder",
-					defaultValue: "alphabetical",
+					defaultValue: "name",
 					options: {
-						alphabetical: "Alphabetical",
-						popularity: "Popularity",
+						name: "Name",
+						counter: "Counter",
 					},
 				},
 			},

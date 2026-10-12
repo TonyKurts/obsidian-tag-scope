@@ -1,4 +1,4 @@
-import { setIcon, prepareSimpleSearch } from "obsidian";
+import { setIcon } from "obsidian";
 import { getClasses, highlightMatches } from "./utils";
 
 export class TagPillComponent {   
@@ -33,17 +33,9 @@ export class TagPillComponent {
         );
     }
 
-    highlightMatch(query: string): void {
-        const search = prepareSimpleSearch(query);
-        const result = search(this.name);
-        
-        if (result) {
-            this.nameEl.empty();
-            highlightMatches(
-                this.nameEl,
-                this.name,
-                result.matches
-            );
-        }
+    highlightName(part: string) {
+        if (!this.name.startsWith(part)) return;
+        this.nameEl.empty();
+        highlightMatches(this.nameEl, this.name, [[0, part.length]]);
     }
 }
