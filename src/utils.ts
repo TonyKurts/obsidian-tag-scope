@@ -96,3 +96,9 @@ export function getObsidianIgnoreFilters(app: App): string[] {
 		? filters.filter((filter): filter is string => typeof filter === "string")
 		: [];
 }
+
+export function isExcludedTag(tag: string, excludedTags: string[]): boolean {
+	return excludedTags.some(excluded =>
+		tag === excluded || tag.startsWith(`${excluded}/`)
+	);
+}

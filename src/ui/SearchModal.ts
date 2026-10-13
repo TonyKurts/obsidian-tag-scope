@@ -7,7 +7,7 @@ import { TagSuggest } from "./TagSuggest";
 import { createDebounce } from "../debounce";
 import { SearchResultsView } from "./SearchResultsView";
 import { SelectedTagsView } from "./SelectedTagsView";
-import { TagScopeSettings } from "../settings";
+import { parseExcludedTags, TagScopeSettings } from "../settings";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
@@ -311,7 +311,10 @@ export class SearchModal extends Modal {
 	}
 
 	private reloadData() {
-		this.notes = getAllNotes(this.app);
+		this.notes = getAllNotes(
+			this.app,
+			parseExcludedTags(this.settings.excludedTags)
+		);
 	}
 
 	onOpen() {

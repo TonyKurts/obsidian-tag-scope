@@ -1,10 +1,13 @@
 import type { Note, FilteredNote, TagFilter } from "../types";
 import { App, getAllTags, parseFrontMatterAliases } from "obsidian";
-import { getDirName, getObsidianIgnoreFilters } from "../utils";
+import { getDirName, getObsidianIgnoreFilters, isExcludedTag } from "../utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 import { getNoteSortingRules } from "./sorting";
 
-export function getAllNotes(app: App): Note[] {
+export function getAllNotes(
+	app: App,
+	excludedTags: string[]
+): Note[] {
 	const ignoreFilters = getObsidianIgnoreFilters(app);
 	return app.vault.getMarkdownFiles().filter(file => 
 		!ignoreFilters.some(
@@ -15,14 +18,15 @@ export function getAllNotes(app: App): Note[] {
 
 		// Tags
 		let tags = cache ? (getAllTags(cache) ?? []) : [];
-		tags = [...new Set(tags)];
-		tags = tags.map(tag => tag.replace("#", ""));
-		tags.sort((tagA, tagB) => tagA.localeCompare(tagB));
+		tags = [...new Set(tags)]
+			.map(tag => tag.replace("#", ""))
+			.filter(tag => !isExcludedTag(tag, excludedTags))
+			.sort((tagA, tagB) => tagA.localeCompare(tagB));
 
 		// Aliases
 		let aliases = parseFrontMatterAliases(cache?.frontmatter) ?? [];
-		aliases = [...new Set(aliases)];
-		aliases = aliases.filter(alias => alias.trim() && alias !== file.basename)
+		aliases = [...new Set(aliases)]
+			.filter(alias => alias.trim() && alias !== file.basename)
 
 		return { file, tags, aliases };
 	}).sort((a, b) => {
