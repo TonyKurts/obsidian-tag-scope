@@ -94,7 +94,7 @@ export class SearchResultsView {
                     // On click (include/exclude)
                     tagPillComponent.el.addEventListener("click", event => {
                         event.stopPropagation();
-                        this.actions.onTagAdd(noteTag, event.ctrlKey);
+                        this.actions.onTagAdd(noteTag, event.ctrlKey || event.metaKey);
                     });
 
                     // Context menu on right click

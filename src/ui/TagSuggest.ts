@@ -20,7 +20,9 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         super(app, textInputEl);
 
         this.onSelect((value, event) => {
-            this.onTagSelected(value.name, this.excludeMode || event.ctrlKey);
+            this.onTagSelected(
+                value.name,
+                this.excludeMode || event.ctrlKey || event.metaKey);
         });
 
         // Ctrl + Enter = Add exclude tag

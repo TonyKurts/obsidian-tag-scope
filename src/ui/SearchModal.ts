@@ -213,15 +213,7 @@ export class SearchModal extends Modal {
 		});
 
 		// Open (new tab)
-		this.scope.register(["Ctrl"], "Enter", () => {
-			if (this.currentNote) {
-				this.openNote(this.currentNote, true);
-			}
-			return false;
-		});
-
-		// Open (new tab) / macOS
-		this.scope.register(["Meta"], "Enter", () => {
+		this.scope.register(["Mod"], "Enter", () => {
 			if (this.currentNote) {
 				this.openNote(this.currentNote, true);
 			}

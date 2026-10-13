@@ -29,7 +29,7 @@ export class SelectedTagsView {
 
             tagPillComponent.el.addEventListener("click", event => {
 				event.stopPropagation();
-				if (event.ctrlKey) this.actions.onInvert(tag);
+				if (event.ctrlKey || event.metaKey) this.actions.onInvert(tag);
 				else this.actions.onRemove(index);
 			});
 
