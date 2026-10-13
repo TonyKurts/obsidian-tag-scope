@@ -1,13 +1,18 @@
 import type { Note, FilteredNote, TagFilter } from "../types";
 import { App, getAllTags, parseFrontMatterAliases } from "obsidian";
-import { getDirName } from "../utils";
+import { getDirName, getObsidianIgnoreFilters } from "../utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 import { getNoteSortingRules } from "./sorting";
 
 export function getAllNotes(app: App): Note[] {
-	return app.vault.getMarkdownFiles().map((file) => {
+	const ignoreFilters = getObsidianIgnoreFilters(app);
+	return app.vault.getMarkdownFiles().filter(file => 
+		!ignoreFilters.some(
+			ignoreFilter => file.path.startsWith(ignoreFilter)
+		)
+	).map(file => {
 		const cache = app.metadataCache.getFileCache(file);
-		
+
 		// Tags
 		let tags = cache ? (getAllTags(cache) ?? []) : [];
 		tags = [...new Set(tags)];

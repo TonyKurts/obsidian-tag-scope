@@ -84,3 +84,15 @@ export function isTagSelected(
 ): boolean {
     return selectedTags.some(selectedTag => selectedTag.name === tag);
 }
+
+export function getObsidianIgnoreFilters(app: App): string[] {
+	const vault = app.vault as App["vault"] & {
+		getConfig?: (key: string) => unknown;
+	};
+
+	const filters = vault.getConfig?.("userIgnoreFilters");
+
+	return Array.isArray(filters)
+		? filters.filter((filter): filter is string => typeof filter === "string")
+		: [];
+}
