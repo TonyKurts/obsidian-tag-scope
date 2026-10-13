@@ -3,6 +3,13 @@ import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 import { TagSuggestionSortOrder } from "../settings";
 import { getTagSuggestionSortingRules } from "./sorting";
 
+export function isTagSelected(
+	tag: string,
+	selected: TagFilter[]
+): boolean {
+	return selected.some(selected => selected.name === tag);
+}
+
 // Returns a tag and all its parent tags.
 // For example, "project/plugin" becomes ["project", "project/plugin"].
 function getTagAncestors(tag: string): string[] {
@@ -10,12 +17,20 @@ function getTagAncestors(tag: string): string[] {
 	return parts.map((_, index) => parts.slice(0, index + 1).join("/"));
 }
 
-// A candidate tag is covered when it is selected directly
-// or when a more specific nested tag is already selected.
-function isCoveredBySelectedTag(tag: string, selected: TagFilter[]): boolean {
-	return selected.some(({ name }) =>
-		tag === name || name.startsWith(`${tag}/`)
-	);
+// A candidate tag is covered when it is selected directly,
+// or based on mode: when a more specific nested sub-tag is selected (subtags),
+// or when a broader parent tag is already selected (parents).
+export function isCoveredByTags(
+	tag: string,
+	selected: (TagFilter | string)[],
+	includeSubtags = true
+): boolean {
+	return selected.some(selectedTag => {
+		const name = typeof selectedTag === "string" ? selectedTag : selectedTag.name;
+		return includeSubtags
+            ? (tag === name || name.startsWith(`${tag}/`)) 
+            : (tag === name || tag.startsWith(`${name}/`));
+	});
 }
 
 // Keeps a parent suggestion when it has multiple immediate children
@@ -42,7 +57,7 @@ export function getTagSuggestions(
 		const tagsInNote = new Set(note.tags.flatMap(getTagAncestors));
 
 		for (const tag of tagsInNote) {
-			if (isCoveredBySelectedTag(tag, selected)) continue;
+			if (isCoveredByTags(tag, selected)) continue;
 			counts.set(tag, (counts.get(tag) ?? 0) + 1);
 		}
 	}

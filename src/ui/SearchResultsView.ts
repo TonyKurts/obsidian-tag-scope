@@ -1,6 +1,7 @@
 import type { FilteredNote, Note, TagFilter } from "../types";
 import { Menu, setIcon } from "obsidian";
-import { highlightMatches, getDirName, isTagSelected, className } from "../utils";
+import { highlightMatches, getDirName, className } from "../utils";
+import { isTagSelected } from "../search/tagSearch";
 import { TagPillComponent } from "./TagPillComponent";
 
 interface SearchResultsActions {
@@ -82,13 +83,13 @@ export class SearchResultsView {
             // 		  file name = file name, and the use frontmatter
             //        as file header setting is not used
             let path = note.file.path;
-            if (!note.isNameAlias) path = getDirName(note.file.path);
+            if (!note.aliasUsed) path = getDirName(note.file.path);
             const pathEl = contentEl.createDiv(className("result-path"));
             highlightMatches(pathEl, path, note.matches.path);
 
             // Suggestion AUX for cases
             // when alias is used instead of a file name
-            if (note.isNameAlias) {
+            if (note.aliasUsed) {
                 const suggestionAuxEl = wrapperEl.createDiv("suggestion-aux");
                 const aliasFlairEl = suggestionAuxEl.createSpan({
                     cls: "suggestion-flair",

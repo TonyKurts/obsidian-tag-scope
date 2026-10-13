@@ -1,38 +1,48 @@
 import type { Note, FilteredNote, TagFilter } from "../types";
 import { App, getAllTags, parseFrontMatterAliases } from "obsidian";
-import { getDirName, getObsidianIgnoreFilters, isExcludedTag } from "../utils";
+import { getDirName, getObsidianIgnoreFilters } from "../utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
+import { isCoveredByTags } from "./tagSearch";
 import { getNoteSortingRules } from "./sorting";
 
 export function getAllNotes(
 	app: App,
-	excludedTags: string[]
+	excludedTags: string[],
+	excludedNoteTags: string[]
 ): Note[] {
 	const ignoreFilters = getObsidianIgnoreFilters(app);
-	return app.vault.getMarkdownFiles().filter(file => 
-		!ignoreFilters.some(
-			ignoreFilter => file.path.startsWith(ignoreFilter)
-		)
-	).map(file => {
-		const cache = app.metadataCache.getFileCache(file);
+	return app.vault.getMarkdownFiles()
+		.filter(file => 
+			!ignoreFilters.some(
+				ignoreFilter => file.path.startsWith(ignoreFilter)
+			)
+		).map(file => {
+			const cache = app.metadataCache.getFileCache(file);
 
-		// Tags
-		let tags = cache ? (getAllTags(cache) ?? []) : [];
-		tags = [...new Set(tags)]
-			.map(tag => tag.replace("#", ""))
-			.filter(tag => !isExcludedTag(tag, excludedTags))
-			.sort((tagA, tagB) => tagA.localeCompare(tagB));
+			// Tags
+			let tags = cache ? (getAllTags(cache) ?? []) : [];
+			tags = [...new Set(tags)]
+				.map(tag => tag.replace("#", ""))
+				.filter(tag => !isCoveredByTags(tag, excludedTags, false))
+				.sort((tagA, tagB) => tagA.localeCompare(tagB));
 
-		// Aliases
-		let aliases = parseFrontMatterAliases(cache?.frontmatter) ?? [];
-		aliases = [...new Set(aliases)]
-			.filter(alias => alias.trim() && alias !== file.basename)
+			// Exclude note by tag
+			if (tags.some(tag => isCoveredByTags(tag, excludedNoteTags, false))) {
+				return null;
+			}
 
-		return { file, tags, aliases };
-	}).sort((a, b) => {
-		const rules = getNoteSortingRules(a, b);
-		return rules.tagsCount || rules.path || rules.name;
-	});
+			// Aliases
+			let aliases = parseFrontMatterAliases(cache?.frontmatter) ?? [];
+			aliases = [...new Set(aliases)]
+				.filter(alias => alias.trim() && alias !== file.basename)
+
+			return { file, tags, aliases };
+		}).filter(note =>
+			note !== null
+		).sort((a, b) => {
+			const rules = getNoteSortingRules(a, b);
+			return rules.tagsCount || rules.path || rules.name;
+		});
 }
 
 function matchesTagFilters(note: Note, filters: TagFilter[]): boolean {
@@ -64,7 +74,7 @@ export function filterNotes(
 		return notes.map(note => ({
 			...note,
 			name: note.file.basename,
-			isNameAlias: false,
+			aliasUsed: false,
 			matches: {
 				name: [],
 				path: []
@@ -79,7 +89,7 @@ export function filterNotes(
 		.flatMap(note => {
 			const path = getDirName(note.file.path);
 			let bestName: string | null = note.file.basename;
-			let isNameAlias = false;
+			let aliasUsed = false;
 			
 			let bestSearch = splitFuzzySearch(searches, {
 				name: bestName,
@@ -99,7 +109,7 @@ export function filterNotes(
 					if (!bestSearch || search.score < bestSearch.score) {
 						bestName = alias;
 						bestSearch = search;
-						isNameAlias = true;
+						aliasUsed = true;
 					}
 				}
 			}
@@ -109,7 +119,7 @@ export function filterNotes(
 			return [{
 				...note,
 				name: bestName,
-				isNameAlias,
+				aliasUsed,
 				matches: {
 					name: bestSearch.matches.name ?? [],
 					path: bestSearch.matches.path ?? []

@@ -10,18 +10,21 @@ export interface TagScopeSettings {
 	tagSuggestionSortOrder: TagSuggestionSortOrder;
 	openNoteDefaultBehaviour: OpenNoteDefaultBehaviour;
 	excludedTags: string;
+	excludedNoteTags: string;
 }
 
 export const DEFAULT_SETTINGS: TagScopeSettings = {
 	tagSuggestionSortOrder: "name",
 	openNoteDefaultBehaviour: "currentTab",
 	excludedTags: "",
+	excludedNoteTags: "",
 };
 
-export function parseExcludedTags(value: string): string[] {
+export function parseSettingsTags(value: string): string[] {
 	return [
 		...new Set(
 			value
+				.toLocaleLowerCase()
 				.split(/\r?\n/)
 				.map(tag => tag.trim().replace(/^#/, "").trim())
 				.filter(Boolean)
@@ -70,7 +73,17 @@ export class TagScopeSettingsTab extends PluginSettingTab {
 					type: "textarea",
 					key: "excludedTags",
 					rows: 5,
-					placeholder: "work\narchive\nstatus/canceled",
+					placeholder: "work\nstatus/canceled",
+				},
+			},
+			{
+				name: "Exclude notes from search by tag",
+				desc: "Enter one tag per line. Notes with these tags or their nested tags will not appear in search results.",
+				control: {
+					type: "textarea",
+					key: "excludedNoteTags",
+					rows: 5,
+					placeholder: "private\ntype/deleted",
 				},
 			},
 		];

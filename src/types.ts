@@ -8,7 +8,7 @@ export interface Note {
 
 export interface FilteredNote extends Note {
     name: string;
-    isNameAlias: boolean;
+    aliasUsed: boolean;
     score: number;
     matches: {
         name: SearchMatchPart[];

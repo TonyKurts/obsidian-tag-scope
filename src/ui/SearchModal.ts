@@ -1,13 +1,13 @@
 import type { FilteredNote, Note, TagFilter } from "../types";
 import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes } from "../search/noteSearch";
-import { getTagSuggestions } from "../search/tagSearch";
-import { openNote, isTagSelected, className } from "../utils";
+import { getTagSuggestions, isTagSelected } from "../search/tagSearch";
+import { openNote, className } from "../utils";
 import { TagSuggest } from "./TagSuggest";
 import { createDebounce } from "../debounce";
 import { SearchResultsView } from "./SearchResultsView";
 import { SelectedTagsView } from "./SelectedTagsView";
-import { parseExcludedTags, TagScopeSettings } from "../settings";
+import { parseSettingsTags, TagScopeSettings } from "../settings";
 
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
@@ -313,7 +313,8 @@ export class SearchModal extends Modal {
 	private reloadData() {
 		this.notes = getAllNotes(
 			this.app,
-			parseExcludedTags(this.settings.excludedTags)
+			parseSettingsTags(this.settings.excludedTags),
+			parseSettingsTags(this.settings.excludedNoteTags)
 		);
 	}
 

@@ -8,7 +8,7 @@ export type SplitFuzzySearchResult = {
 } | null;
 
 export function prepareSplitFuzzySearch(query: string): FuzzySearchHandler[] {
-	let words = [...new Set(query.trim().split(/\s+/))];
+	let words = [...new Set(query.trim().split(/\s+/).filter(Boolean))];
     return words.map(word => prepareFuzzySearch(word));
 }
 

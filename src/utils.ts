@@ -1,5 +1,4 @@
 import { App, TFile, Notice, SearchMatchPart } from "obsidian";
-import { TagFilter } from "./types";
 import { PLUGIN_ID } from "./settings";
 
 export async function openNote(
@@ -78,13 +77,6 @@ export function highlightMatches(
     }
 }
 
-export function isTagSelected(
-    tag: string,
-    selectedTags: TagFilter[]
-): boolean {
-    return selectedTags.some(selectedTag => selectedTag.name === tag);
-}
-
 export function getObsidianIgnoreFilters(app: App): string[] {
 	const vault = app.vault as App["vault"] & {
 		getConfig?: (key: string) => unknown;
@@ -95,10 +87,4 @@ export function getObsidianIgnoreFilters(app: App): string[] {
 	return Array.isArray(filters)
 		? filters.filter((filter): filter is string => typeof filter === "string")
 		: [];
-}
-
-export function isExcludedTag(tag: string, excludedTags: string[]): boolean {
-	return excludedTags.some(excluded =>
-		tag === excluded || tag.startsWith(`${excluded}/`)
-	);
 }
