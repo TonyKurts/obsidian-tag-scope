@@ -7,16 +7,18 @@ export interface Note {
 };
 
 export interface FilteredNote extends Note {
-    matches: {
-        name: SearchMatchPart[],
-        path: SearchMatchPart[]
-    },
+    name: string;
+    isNameAlias: boolean;
     score: number;
+    matches: {
+        name: SearchMatchPart[];
+        path: SearchMatchPart[];
+    },
 };
 
 export interface TagFilter {
-    name: string,
-    exclude: boolean
+    name: string;
+    exclude: boolean;
 }
 
 export interface TagSuggestion {

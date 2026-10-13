@@ -2,7 +2,7 @@ import { SearchResult, prepareFuzzySearch, SearchMatchPart } from "obsidian";
 
 type FuzzySearchHandler = (text: string) => SearchResult | null;
 
-type SplitFuzzySearchResult = {
+export type SplitFuzzySearchResult = {
 	matches: Record<string, SearchMatchPart[]>;
 	score: number;
 } | null;

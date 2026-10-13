@@ -149,6 +149,12 @@ input[type="text"].tag-scope-tag-input {
     padding: var(--size-4-3);
 }
 
+.tag-scope-result-wrapper {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
 .tag-scope-result-name {
     word-break: break-word;
 }
@@ -167,7 +173,7 @@ input[type="text"].tag-scope-tag-input {
     display: flex;
     flex-wrap: wrap;
     gap: var(--size-2-2);
-    margin-top: var(--size-2-2);
+    margin-top: var(--size-2-3);
     font-size: var(--font-ui-small);
 
     &:empty {

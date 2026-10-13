@@ -1,5 +1,5 @@
 import type { FilteredNote, Note, TagFilter } from "../types";
-import { Menu } from "obsidian";
+import { Menu, setIcon } from "obsidian";
 import { highlightMatches, getDirName, isTagSelected, className } from "../utils";
 import { TagPillComponent } from "./TagPillComponent";
 
@@ -67,9 +67,13 @@ export class SearchResultsView {
                 );
             });
 
+
+            const wrapperEl = rowEl.createDiv(className("result-wrapper"));
+            const contentEl = wrapperEl.createDiv("suggestion-content");
+
             // Note name
-            const nameEl = rowEl.createDiv(className("result-name"));
-            highlightMatches(nameEl, note.file.basename, note.matches.name);
+            const nameEl = contentEl.createDiv(className("result-name"));
+            highlightMatches(nameEl, note.name, note.matches.name);
 
             // Note path
             //
@@ -77,9 +81,22 @@ export class SearchResultsView {
             // 		  without the file name, for accuracy, but only if
             // 		  file name = file name, and the use frontmatter
             //        as file header setting is not used
-            const path = getDirName(note.file.path);
-            const pathEl = rowEl.createDiv(className("result-path"));
+            let path = note.file.path;
+            if (!note.isNameAlias) path = getDirName(note.file.path);
+            const pathEl = contentEl.createDiv(className("result-path"));
             highlightMatches(pathEl, path, note.matches.path);
+
+            // Suggestion AUX for cases
+            // when alias is used instead of a file name
+            if (note.isNameAlias) {
+                const suggestionAuxEl = wrapperEl.createDiv("suggestion-aux");
+                const aliasFlairEl = suggestionAuxEl.createSpan({
+                    cls: "suggestion-flair",
+                    attr: { "aria-label": "Alias" },
+                });
+            
+                setIcon(aliasFlairEl, "forward");
+            }
 
             // Note tags
             //

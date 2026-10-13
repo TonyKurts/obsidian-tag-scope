@@ -15,7 +15,10 @@ export function getAllNotes(app: App): Note[] {
 		tags.sort((tagA, tagB) => tagA.localeCompare(tagB));
 
 		// Aliases
-		const aliases = parseFrontMatterAliases(cache?.frontmatter) ?? [];
+		let aliases = parseFrontMatterAliases(cache?.frontmatter) ?? [];
+		aliases = [...new Set(aliases)];
+		aliases = aliases.filter(alias => alias.trim() && alias !== file.basename)
+
 		return { file, tags, aliases };
 	}).sort((a, b) => {
 		const rules = getNoteSortingRules(a, b);
@@ -51,6 +54,8 @@ export function filterNotes(
 	if (!query) {
 		return notes.map(note => ({
 			...note,
+			name: note.file.basename,
+			isNameAlias: false,
 			matches: {
 				name: [],
 				path: []
@@ -63,23 +68,44 @@ export function filterNotes(
 	const searches = prepareSplitFuzzySearch(query);
 	return notes
 		.flatMap(note => {
-			const search = splitFuzzySearch(
-				searches,
-				{
-					name: note.file.basename,
-					path: getDirName(note.file.path)
-				}
-			);
+			const path = getDirName(note.file.path);
+			let bestName: string | null = note.file.basename;
+			let isNameAlias = false;
+			
+			let bestSearch = splitFuzzySearch(searches, {
+				name: bestName,
+				path,
+			});
 
-			if (!search) return [];
+			if (!bestSearch) {
+				bestName = null;
+
+				for (const alias of note.aliases) {
+					const search = splitFuzzySearch(searches, {
+						name: alias,
+						path
+					});
+
+					if (!search) continue;
+					if (!bestSearch || search.score < bestSearch.score) {
+						bestName = alias;
+						bestSearch = search;
+						isNameAlias = true;
+					}
+				}
+			}
+
+			if (!bestSearch || !bestName) return [];
 
 			return [{
 				...note,
+				name: bestName,
+				isNameAlias,
 				matches: {
-					name: search.matches.name ?? [],
-					path: search.matches.path ?? []
+					name: bestSearch.matches.name ?? [],
+					path: bestSearch.matches.path ?? []
 				},
-				score: search.score,
+				score: bestSearch.score,
 			}];
 		})
 		.sort((a, b) => {
