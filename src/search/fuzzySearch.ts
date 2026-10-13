@@ -2,52 +2,54 @@ import { SearchResult, prepareFuzzySearch, SearchMatchPart } from "obsidian";
 
 type FuzzySearchHandler = (text: string) => SearchResult | null;
 
-type FuzzySearchResult = {
-    matches: SearchMatchPart[][],
-    score: number
+type SplitFuzzySearchResult = {
+	matches: Record<string, SearchMatchPart[]>;
+	score: number;
 } | null;
 
 export function prepareSplitFuzzySearch(query: string): FuzzySearchHandler[] {
-    return query
-        .split(/\s+/)
-        .map(word => prepareFuzzySearch(word));
+	let words = [...new Set(query.trim().split(/\s+/))];
+    return words.map(word => prepareFuzzySearch(word));
 }
 
 export function splitFuzzySearch(
 	searchers: FuzzySearchHandler[],
-	...texts: string[]
-): FuzzySearchResult {
-	const matchesByText = texts.map((): SearchMatchPart[] => []);
-	const bestScoreByText = texts.map(() => Number.NEGATIVE_INFINITY);
+	texts: Record<string, string>
+): SplitFuzzySearchResult {
+	const resultsByText: Record<string, (SearchResult | null)[]> = {};
+	const matchedWords = searchers.map(() => false);
 
-	for (const search of searchers) {
-		const results = texts.map(text => search(text));
+	// Search every query word in every text field and keep the results for reuse
+	for (const [textName, text] of Object.entries(texts)) {
+		const textResults = searchers.map(search => search(text));
 
-		// Every query word must match at least one of the provided texts.
-		if (results.every(result => result === null)) {
-			return null;
-		}
+		resultsByText[textName] = textResults;
 
-		results.forEach((result, textIndex) => {
-			if (!result) return;
-        
-			// Collect ranges for highlighting this text
-			const matches = matchesByText[textIndex];
-	        const bestScore = bestScoreByText[textIndex];
-            if (!matches || bestScore === undefined) return;
-			
-            matches.push(...result.matches);
-            // Keep the best score for this text across all query words
-	        bestScoreByText[textIndex] = Math.max(bestScore, result.score);
+		textResults.forEach((result, wordIndex) => {
+			if (result) matchedWords[wordIndex] = true;
 		});
 	}
 
-	return {
-		matches: matchesByText,
-		// Add the best score from each text, such as the file name and path
-		score: bestScoreByText.reduce((total, score) => {
-			if (score === Number.NEGATIVE_INFINITY) return total;
-			else return total - score;
-		}, 0),
-	};
+	// Every query word must match in at least one text field
+	if (matchedWords.some(matched => !matched)) return null;
+	
+	const matches: Record<string, SearchMatchPart[]> = {};
+	let score = 0;
+
+	// Collect highlights and preserve the existing score calculation.
+	for (const [textName, textResults] of Object.entries(resultsByText)) {
+		matches[textName] = [];
+
+		for (const result of textResults) {
+			if (!result) continue;
+
+			matches[textName].push(...result.matches);
+
+			if (result.score !== Number.NEGATIVE_INFINITY) {
+				score -= result.score;
+			}
+		}
+	}
+	
+	return { matches, score };
 }

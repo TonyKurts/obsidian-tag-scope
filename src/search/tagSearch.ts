@@ -50,14 +50,14 @@ export function getTagSuggestions(
 	// Search each unique tag once
 	const suggestions: TagSuggestion[] = [];
 	for (const [tag, count] of counts) {
-		const search = splitFuzzySearch(searches, tag);
+		const search = splitFuzzySearch(searches, { name: tag });
 		if (!search) continue;
 
 		suggestions.push({
 			name: tag,
 			count,
 			score: search.score,
-			matches: search.matches[0] ?? [],
+			matches: search.matches.name ?? [],
 		});
 	}
 

@@ -1,5 +1,5 @@
 import type { Note, FilteredNote, TagFilter } from "../types";
-import { App, getAllTags } from "obsidian";
+import { App, getAllTags, parseFrontMatterAliases } from "obsidian";
 import { getDirName } from "../utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 import { getNoteSortingRules } from "./sorting";
@@ -8,15 +8,16 @@ export function getAllNotes(app: App): Note[] {
 	return app.vault.getMarkdownFiles().map((file) => {
 		const cache = app.metadataCache.getFileCache(file);
 		
+		// Tags
 		let tags = cache ? (getAllTags(cache) ?? []) : [];
+		tags = [...new Set(tags)];
 		tags = tags.map(tag => tag.replace("#", ""));
 		tags.sort((tagA, tagB) => tagA.localeCompare(tagB));
-		
-		return {
-			file,
-			tags: [...new Set(tags)],
-		};
-	}).sort((a, b) => { // Global notes sorting
+
+		// Aliases
+		const aliases = parseFrontMatterAliases(cache?.frontmatter) ?? [];
+		return { file, tags, aliases };
+	}).sort((a, b) => {
 		const rules = getNoteSortingRules(a, b);
 		return rules.tagsCount || rules.path || rules.name;
 	});
@@ -50,8 +51,10 @@ export function filterNotes(
 	if (!query) {
 		return notes.map(note => ({
 			...note,
-			nameMatches: [],
-			pathMatches: [],
+			matches: {
+				name: [],
+				path: []
+			},
 			score: 0,
 		}));
 	}
@@ -62,16 +65,20 @@ export function filterNotes(
 		.flatMap(note => {
 			const search = splitFuzzySearch(
 				searches,
-				note.file.basename,
-				getDirName(note.file.path),
+				{
+					name: note.file.basename,
+					path: getDirName(note.file.path)
+				}
 			);
 
 			if (!search) return [];
 
 			return [{
 				...note,
-				nameMatches: search.matches[0] ?? [],
-				pathMatches: search.matches[1] ?? [],
+				matches: {
+					name: search.matches.name ?? [],
+					path: search.matches.path ?? []
+				},
 				score: search.score,
 			}];
 		})

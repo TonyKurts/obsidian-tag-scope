@@ -3,11 +3,14 @@ import type { TFile, SearchMatchPart } from "obsidian";
 export interface Note {
     file: TFile;
     tags: string[];
+    aliases: string[];
 };
 
 export interface FilteredNote extends Note {
-    nameMatches: SearchMatchPart[];
-    pathMatches: SearchMatchPart[];
+    matches: {
+        name: SearchMatchPart[],
+        path: SearchMatchPart[]
+    },
     score: number;
 };
 

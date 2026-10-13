@@ -69,7 +69,7 @@ export class SearchResultsView {
 
             // Note name
             const nameEl = rowEl.createDiv(className("result-name"));
-            highlightMatches(nameEl, note.file.basename, note.nameMatches);
+            highlightMatches(nameEl, note.file.basename, note.matches.name);
 
             // Note path
             //
@@ -79,7 +79,7 @@ export class SearchResultsView {
             //        as file header setting is not used
             const path = getDirName(note.file.path);
             const pathEl = rowEl.createDiv(className("result-path"));
-            highlightMatches(pathEl, path, note.pathMatches);
+            highlightMatches(pathEl, path, note.matches.path);
 
             // Note tags
             //
