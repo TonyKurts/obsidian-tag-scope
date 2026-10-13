@@ -118,7 +118,13 @@ export class SearchModal extends Modal {
 						this.selectRow(index, false);
 					}
 				},
-				onOpenNote: (note, newTab) => { this.openNote(note, newTab); },
+				onOpenNote: (note, alternate) => {
+					let newTab =
+						this.settings.openNoteDefaultBehaviour === "newTab" ?
+						true : false;
+						
+					this.openNote(note, alternate ? !newTab : newTab);
+				},
 				onTagAdd: (tag, exclude) => { this.addTag(tag, exclude); },
 			}
 		);

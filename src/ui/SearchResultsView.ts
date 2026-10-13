@@ -6,7 +6,7 @@ import { TagPillComponent } from "./TagPillComponent";
 interface SearchResultsActions {
     onRowMouseEnter(index: number): void;
     onRowMouseMove(index: number): void;
-    onOpenNote(note: Note, newTab: boolean): void;
+    onOpenNote(note: Note, alternate: boolean): void;
     onTagAdd(tag: string, exclude: boolean): void;
 }
 
