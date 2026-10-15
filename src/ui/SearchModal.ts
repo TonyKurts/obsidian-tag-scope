@@ -20,6 +20,10 @@ export class SearchModal extends Modal {
 		() => this.refreshResults()
 	);
 
+	readonly debouncedRestore = createDebounce(
+		() => this.restore()
+	)
+
 	// HTML
 	private closeBtnEl!: HTMLElement;
 	private tagFieldEl!: HTMLElement;
@@ -318,12 +322,16 @@ export class SearchModal extends Modal {
 		);
 	}
 
-	onOpen() {
+	private restore() {
 		this.selectedTags = [];
 		this.fileInputEl.value = "";
-		this.reloadData();
 		this.updateTagsView();
+		this.reloadData();
 		this.refreshResults();
+	}
+
+	onOpen() {
+		this.restore();
 	}
 
     onClose() {

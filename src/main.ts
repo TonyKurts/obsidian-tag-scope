@@ -25,6 +25,10 @@ export default class TagScopePlugin extends Plugin {
         );
     }
 
+    restoreSearchModal() {
+        void this.searchModal?.debouncedRestore.call();
+    }
+
     onunload() {
         this.searchModal?.close();
         this.searchModal = null;

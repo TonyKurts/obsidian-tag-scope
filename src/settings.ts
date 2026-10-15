@@ -38,6 +38,16 @@ export class TagScopeSettingsTab extends PluginSettingTab {
         super(app, plugin);
         this.plugin = plugin;
     }
+	
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		await super.setControlValue(key, value);
+		if (
+			key === "excludedTags" ||
+			key === "excludedNoteTags"
+		) {
+			this.plugin.restoreSearchModal();
+		}
+	}
 
 	getSettingDefinitions(): SettingDefinitionItem[] {
 		return [
