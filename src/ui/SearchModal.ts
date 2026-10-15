@@ -2,7 +2,7 @@ import type { FilteredNote, Note, Tag, TagFilter } from "../types";
 import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes } from "../search/noteSearch";
 import { getTagSuggestions, isTagIncluded } from "../search/tagSearch";
-import { openNote, className } from "../utils";
+import { openNote, className, uniqueByKey } from "../utils";
 import { TagSuggest } from "./TagSuggest";
 import { createDebounce } from "../debounce";
 import { SearchResultsView } from "./SearchResultsView";
@@ -300,13 +300,13 @@ export class SearchModal extends Modal {
 	}
 
 	private updateCounters(): void {
-		const availableTags = new Set(
+		const availableTags = uniqueByKey(
 			this.filtered.flatMap(note => 
 				note.tags.filter(tag => !isTagIncluded(tag, this.selectedTags))
 			)
 		);
 
-		this.tagCounterEl.innerText = availableTags.size.toLocaleString();
+		this.tagCounterEl.innerText = availableTags.length.toLocaleString();
 		this.noteCounterEl.innerText = this.filtered.length.toLocaleString();
 	}
 

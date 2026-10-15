@@ -2,12 +2,13 @@ import { type Note, type TagSuggestion, type TagFilter, type Tag, makeTag } from
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 import { TagSuggestionSortOrder } from "../settings";
 import { getTagSuggestionSortingRules } from "./sorting";
+import { uniqueByKey } from "../utils";
 
 export function isTagIncluded(
 	tag: Tag,
-	collection: Tag[]
+	items: Tag[]
 ): boolean {
-	return collection.some(owned => tag.key === owned.key);
+	return items.some(item => tag.key === item.key);
 }
 
 // A candidate tag is covered when it is selected directly,
@@ -15,13 +16,13 @@ export function isTagIncluded(
 // or when a broader parent tag is already selected (parents).
 export function isCoveredByTags(
 	tag: Tag,
-	collection: Tag[],
+	items: Tag[],
 	includeSubtags = true
 ): boolean {
-	return collection.some(owned => {
+	return items.some(item => {
 		return includeSubtags
-            ? (tag.key === owned.key || owned.key.startsWith(`${tag.key}/`)) 
-            : (tag.key === owned.key || tag.key.startsWith(`${owned.key}/`));
+            ? (tag.key === item.key || item.key.startsWith(`${tag.key}/`)) 
+            : (tag.key === item.key || tag.key.startsWith(`${item.key}/`));
 	});
 }
 
@@ -57,12 +58,9 @@ export function getTagSuggestions(
 	// Count each candidate tag once per note, including its parent tags.
 	for (const note of notes) {
 		// Collect all parent in flat array
-		const allAncestors = note.tags.flatMap(getTagAncestors);
-		
-		// Unique via Map using a unique field
-		const uniqueNoteTags = new Map<string, Tag>();
-		allAncestors.map(tag => uniqueNoteTags.set(tag.key, tag));
-		const noteTags = [...uniqueNoteTags.values()];
+		const noteTags = uniqueByKey(
+			note.tags.flatMap(getTagAncestors)
+		);
 
 		for (const noteTag of noteTags) {
 			if (isCoveredByTags(noteTag, selected)) continue;

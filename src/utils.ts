@@ -88,3 +88,15 @@ export function getObsidianIgnoreFilters(app: App): string[] {
 		? filters.filter((filter): filter is string => typeof filter === "string")
 		: [];
 }
+
+export function uniqueByKey<T extends { key: string }>(
+	items: Iterable<T>,
+): T[] {
+	const unique = new Map<string, T>();
+
+	for (const item of items) {
+		if (!unique.has(item.key)) unique.set(item.key, item);
+	}
+
+	return [...unique.values()];
+}
