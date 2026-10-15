@@ -1,36 +1,38 @@
-import type { Note, TagSuggestion, TagFilter } from "../types";
+import { type Note, type TagSuggestion, type TagFilter, type Tag, makeTag } from "../types";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
 import { TagSuggestionSortOrder } from "../settings";
 import { getTagSuggestionSortingRules } from "./sorting";
 
-export function isTagSelected(
-	tag: string,
-	selected: TagFilter[]
+export function isTagIncluded(
+	tag: Tag,
+	collection: Tag[]
 ): boolean {
-	return selected.some(selected => selected.name === tag);
-}
-
-// Returns a tag and all its parent tags.
-// For example, "project/plugin" becomes ["project", "project/plugin"].
-function getTagAncestors(tag: string): string[] {
-	const parts = tag.split("/");
-	return parts.map((_, index) => parts.slice(0, index + 1).join("/"));
+	return collection.some(owned => tag.key === owned.key);
 }
 
 // A candidate tag is covered when it is selected directly,
 // or based on mode: when a more specific nested sub-tag is selected (subtags),
 // or when a broader parent tag is already selected (parents).
 export function isCoveredByTags(
-	tag: string,
-	selected: (TagFilter | string)[],
+	tag: Tag,
+	collection: Tag[],
 	includeSubtags = true
 ): boolean {
-	return selected.some(selectedTag => {
-		const name = typeof selectedTag === "string" ? selectedTag : selectedTag.name;
+	return collection.some(owned => {
 		return includeSubtags
-            ? (tag === name || name.startsWith(`${tag}/`)) 
-            : (tag === name || tag.startsWith(`${name}/`));
+            ? (tag.key === owned.key || owned.key.startsWith(`${tag.key}/`)) 
+            : (tag.key === owned.key || tag.key.startsWith(`${owned.key}/`));
 	});
+}
+
+// Returns a tag and all its parent tags.
+// For example, "project/plugin" becomes ["project", "project/plugin"].
+function getTagAncestors(tag: Tag): Tag[] {
+	const parts = tag.display.split("/");
+	return parts
+		.map((_, index) => 
+			makeTag(parts.slice(0, index + 1).join("/"))
+		).filter(tag => tag !== null);
 }
 
 // Keeps a parent suggestion when it has multiple immediate children
@@ -50,26 +52,36 @@ export function getTagSuggestions(
 	sortOrder: TagSuggestionSortOrder
 ): TagSuggestion[] {
 	const searches = prepareSplitFuzzySearch(query);
-	const counts = new Map<string, number>();
+	const counts = new Map<string, { tag: Tag, count: number }>();
 
 	// Count each candidate tag once per note, including its parent tags.
 	for (const note of notes) {
-		const tagsInNote = new Set(note.tags.flatMap(getTagAncestors));
+		// Collect all parent in flat array
+		const allAncestors = note.tags.flatMap(getTagAncestors);
+		
+		// Unique via Map using a unique field
+		const uniqueNoteTags = new Map<string, Tag>();
+		allAncestors.map(tag => uniqueNoteTags.set(tag.key, tag));
+		const noteTags = [...uniqueNoteTags.values()];
 
-		for (const tag of tagsInNote) {
-			if (isCoveredByTags(tag, selected)) continue;
-			counts.set(tag, (counts.get(tag) ?? 0) + 1);
+		for (const noteTag of noteTags) {
+			if (isCoveredByTags(noteTag, selected)) continue;
+			const current = counts.get(noteTag.key);
+			counts.set(noteTag.key, {
+				tag: current?.tag ?? noteTag,
+				count: (current?.count ?? 0) + 1,
+			})
 		}
 	}
 
 	// Search each unique tag once
 	const suggestions: TagSuggestion[] = [];
-	for (const [tag, count] of counts) {
-		const search = splitFuzzySearch(searches, { name: tag });
+	for (const { tag, count } of counts.values()) {
+		const search = splitFuzzySearch(searches, { name: tag.key });
 		if (!search) continue;
 
 		suggestions.push({
-			name: tag,
+			...tag,
 			count,
 			score: search.score,
 			matches: search.matches.name ?? [],
@@ -81,8 +93,8 @@ export function getTagSuggestions(
 			// Considetr only immediate children, not deeper descendants.
 			const children = suggestions
 				.filter(childTag =>
-					childTag.name.startsWith(`${parentTag.name}/`) &&
-					!childTag.name.slice(parentTag.name.length + 1).includes("/")
+					childTag.key.startsWith(`${parentTag.key}/`) &&
+					!childTag.key.slice(parentTag.key.length + 1).includes("/")
 				)
 
 			return hasUsefulParentCount(parentTag.count, children);

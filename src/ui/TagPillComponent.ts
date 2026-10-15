@@ -1,18 +1,16 @@
 import { setIcon } from "obsidian";
 import { getClasses, highlightMatches } from "../utils";
+import { Tag } from "../types";
 
 export class TagPillComponent {   
-    readonly name: string;
     readonly el: HTMLElement;
     readonly nameEl: HTMLSpanElement;
     
     constructor(
-        name: string,
+        readonly tag: Tag,
         icon: string,
         classes?: string | string[]
     ) {
-        this.name = name;
-
         // Container
         this.el = createDiv({
             cls: [
@@ -24,7 +22,7 @@ export class TagPillComponent {
         // Name
         this.nameEl = this.el
             .createDiv("multi-select-pill-content")
-            .createSpan({ text: name });
+            .createSpan({ text: tag.display });
 
         // Icon
         setIcon(
@@ -34,8 +32,8 @@ export class TagPillComponent {
     }
 
     highlightName(part: string) {
-        if (!this.name.startsWith(part)) return;
+        if (!this.tag.key.startsWith(part)) return;
         this.nameEl.empty();
-        highlightMatches(this.nameEl, this.name, [[0, part.length]]);
+        highlightMatches(this.nameEl, this.tag.display, [[0, part.length]]);
     }
 }

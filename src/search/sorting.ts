@@ -18,6 +18,6 @@ export function getTagSuggestionSortingRules(
     return {
         score: a.score - b.score,
         popularity: sortOrder === "counter" ? b.count - a.count : 0,
-        name: a.name.localeCompare(b.name),
+        name: a.key.localeCompare(b.key),
     }
 }

@@ -18,7 +18,7 @@ export class SelectedTagsView {
         this.container.empty();
         tags.forEach((tag, index) => {
             const tagPillComponent = new TagPillComponent(
-				tag.name,
+				tag,
 				"x",
 				[
 					className("tag"),

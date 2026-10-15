@@ -1,8 +1,23 @@
 import type { TFile, SearchMatchPart } from "obsidian";
 
+export interface Tag {
+    display: string;
+    key: string;
+}
+
+export interface TagFilter extends Tag {
+    exclude: boolean;
+}
+
+export interface TagSuggestion extends Tag {
+    count: number;
+    matches: SearchMatchPart[];
+    score: number;
+};
+
 export interface Note {
     file: TFile;
-    tags: string[];
+    tags: Tag[];
     aliases: string[];
 };
 
@@ -16,14 +31,13 @@ export interface FilteredNote extends Note {
     },
 };
 
-export interface TagFilter {
-    name: string;
-    exclude: boolean;
-}
+export function makeTag(value: string): Tag | null {
+    value = value.replaceAll("#", "").trim();
 
-export interface TagSuggestion {
-    name: string;
-    count: number;
-    matches: SearchMatchPart[];
-    score: number;
-};
+    if (value) {
+        return {
+            display: value,
+            key: value.toLowerCase(),
+        }
+    } else return null;
+}

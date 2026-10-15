@@ -1,5 +1,6 @@
 import type TagScopePlugin from "./main";
 import { App, PluginSettingTab, SettingDefinitionItem } from "obsidian";
+import { makeTag, Tag } from "./types";
 
 export const PLUGIN_ID = "tag-scope";
 
@@ -20,16 +21,14 @@ export const DEFAULT_SETTINGS: TagScopeSettings = {
 	excludedNoteTags: "",
 };
 
-export function parseSettingsTags(value: string): string[] {
+export function parseSettingsTags(value: string): Tag[] {
 	return [
 		...new Set(
 			value
-				.toLocaleLowerCase()
 				.split(/\r?\n/)
-				.map(tag => tag.trim().replace(/^#/, "").trim())
-				.filter(Boolean)
-		),
-	];
+				.map(tag => makeTag(tag))
+		)
+	].filter(tag => tag !== null);
 }
 
 export class TagScopeSettingsTab extends PluginSettingTab {

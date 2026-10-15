@@ -1,14 +1,14 @@
-import type { FilteredNote, Note, TagFilter } from "../types";
+import type { FilteredNote, Note, Tag, TagFilter } from "../types";
 import { Menu, setIcon } from "obsidian";
 import { highlightMatches, getDirName, className } from "../utils";
-import { isTagSelected } from "../search/tagSearch";
+import { isTagIncluded } from "../search/tagSearch";
 import { TagPillComponent } from "./TagPillComponent";
 
 interface SearchResultsActions {
     onRowMouseEnter(index: number): void;
     onRowMouseMove(index: number): void;
     onOpenNote(note: Note, alternate: boolean): void;
-    onTagAdd(tag: string, exclude: boolean): void;
+    onTagAdd(tag: Tag, exclude: boolean): void;
 }
 
 export class SearchResultsView {
@@ -105,7 +105,7 @@ export class SearchResultsView {
             // that have not yet beenselected in the search
             const tagsEl = rowEl.createDiv(className("result-tags"));
             note.tags
-                .filter(noteTag => !isTagSelected(noteTag, selectedTags))
+                .filter(noteTag => !isTagIncluded(noteTag, selectedTags))
                 .forEach(noteTag => {
                     const tagPillComponent = new TagPillComponent(noteTag, "plus", className("tag"));
 
@@ -142,7 +142,7 @@ export class SearchResultsView {
                     // that appears in the note, then the tag in the note receives
                     // additional highlighting to indicate a potential refinement
                     selectedTags.forEach(tag => {
-                        tagPillComponent.highlightName(tag.name);
+                        tagPillComponent.highlightName(tag.key);
                     });
                     
                     tagsEl.appendChild(tagPillComponent.el);

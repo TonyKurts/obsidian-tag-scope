@@ -1,7 +1,7 @@
-import type { FilteredNote, Note, TagFilter } from "../types";
+import type { FilteredNote, Note, Tag, TagFilter } from "../types";
 import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes } from "../search/noteSearch";
-import { getTagSuggestions, isTagSelected } from "../search/tagSearch";
+import { getTagSuggestions, isTagIncluded } from "../search/tagSearch";
 import { openNote, className } from "../utils";
 import { TagSuggest } from "./TagSuggest";
 import { createDebounce } from "../debounce";
@@ -233,11 +233,11 @@ export class SearchModal extends Modal {
 		this.refreshResults();
 	}
 
-	private addTag(tag: string, exclude = false) {
-		if (isTagSelected(tag, this.selectedTags)) return;
+	private addTag(tag: Tag, exclude = false) {
+		if (isTagIncluded(tag, this.selectedTags)) return;
 		
 		this.selectedTags.push({
-			name: tag,
+			...tag,
 			exclude
 		});
 
@@ -302,7 +302,7 @@ export class SearchModal extends Modal {
 	private updateCounters(): void {
 		const availableTags = new Set(
 			this.filtered.flatMap(note => 
-				note.tags.filter(tag => !isTagSelected(tag, this.selectedTags))
+				note.tags.filter(tag => !isTagIncluded(tag, this.selectedTags))
 			)
 		);
 

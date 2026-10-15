@@ -1,5 +1,5 @@
 import { App, AbstractInputSuggest } from "obsidian";
-import { TagSuggestion } from "../types";
+import { makeTag, Tag, TagSuggestion } from "../types";
 import { highlightMatches, className } from "../utils";
 import { createDebounce } from "../debounce";
 
@@ -15,13 +15,13 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         app: App,
         textInputEl: HTMLInputElement | HTMLDivElement,
         private readonly getItems: (query: string) => TagSuggestion[],
-        private readonly onTagSelected: (tag: string, exclude: boolean) => void
+        private readonly onTagSelected: (tag: Tag, exclude: boolean) => void
     ) {
         super(app, textInputEl);
 
-        this.onSelect((value, event) => {
+        this.onSelect((tag, event) => {
             this.onTagSelected(
-                value.name,
+                tag,
                 this.excludeMode || event.ctrlKey || event.metaKey);
         });
 
@@ -29,15 +29,16 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         this.scope.register(["Ctrl"], "Enter", () => {
             const selected = this.getSelected();
             if (!selected) return false;
+
             this.onTagSelected(selected, true);
             return false;
 		});
     }
 
-    private getSelected(): string | undefined {
+    private getSelected(): Tag | null {
         const selectedEl = this.suggestEl
             .querySelector(".suggestion-item.is-selected") as HTMLElement;
-        return selectedEl?.dataset?.tagScopeSuggestionId;
+        return makeTag(selectedEl?.dataset?.tagScopeSuggestionId || "")
     }
 
     protected async getSuggestions(query: string): Promise<TagSuggestion[]> {
@@ -47,12 +48,14 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
     }
 
     renderSuggestion(value: TagSuggestion, el: HTMLElement): void {
-        el.dataset.tagScopeSuggestionId = value.name;
+        // We set the key to display because it is easier
+        // to convert it to Tag later via makeTag()
+        el.dataset.tagScopeSuggestionId = value.display;
         const wrapper = el.createDiv(className("suggestion"));
         const nameEl = wrapper.createSpan({ cls: className("suggestion-name") });
         
         // Highlight part of the name for ease of working with fuzzy search
-        highlightMatches(nameEl, value.name, value.matches);
+        highlightMatches(nameEl, value.display, value.matches);
 
         // Frequency of occurrence of this tag among a sample of notes
         wrapper.createSpan({

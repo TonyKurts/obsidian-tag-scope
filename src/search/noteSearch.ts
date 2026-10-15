@@ -1,4 +1,4 @@
-import type { Note, FilteredNote, TagFilter } from "../types";
+import { Note, FilteredNote, TagFilter, Tag, makeTag } from "../types";
 import { App, getAllTags, parseFrontMatterAliases } from "obsidian";
 import { getDirName, getObsidianIgnoreFilters } from "../utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
@@ -7,8 +7,8 @@ import { getNoteSortingRules } from "./sorting";
 
 export function getAllNotes(
 	app: App,
-	excludedTags: string[],
-	excludedNoteTags: string[]
+	excludedTags: Tag[],
+	excludedNoteTags: Tag[]
 ): Note[] {
 	const ignoreFilters = getObsidianIgnoreFilters(app);
 	return app.vault.getMarkdownFiles()
@@ -20,11 +20,12 @@ export function getAllNotes(
 			const cache = app.metadataCache.getFileCache(file);
 
 			// Tags
-			let tags = cache ? (getAllTags(cache) ?? []) : [];
-			tags = [...new Set(tags)]
-				.map(tag => tag.replace("#", ""))
+			const allTags = cache ? (getAllTags(cache) ?? []) : [];
+			const tags: Tag[] = [...new Set(allTags)]
+				.map(tag => makeTag(tag))
+				.filter(tag => tag !== null)
 				.filter(tag => !isCoveredByTags(tag, excludedTags, false))
-				.sort((tagA, tagB) => tagA.localeCompare(tagB));
+				.sort((tagA, tagB) => tagA.key.localeCompare(tagB.key));
 
 			// Exclude note by tag
 			if (tags.some(tag => isCoveredByTags(tag, excludedNoteTags, false))) {
@@ -37,9 +38,8 @@ export function getAllNotes(
 				.filter(alias => alias.trim() && alias !== file.basename)
 
 			return { file, tags, aliases };
-		}).filter(note =>
-			note !== null
-		).sort((a, b) => {
+		}).filter(note => note !== null)
+		.sort((a, b) => {
 			const rules = getNoteSortingRules(a, b);
 			return rules.tagsCount || rules.path || rules.name;
 		});
@@ -47,15 +47,11 @@ export function getAllNotes(
 
 function matchesTagFilters(note: Note, filters: TagFilter[]): boolean {
 	// Ensure the note satisfies EVERY tag criteria in the filter list
-	return filters.every(({ name, exclude }) => {
+	return filters.every(tag => {
 		// Check if the note has the specified tag
 		// or any of its nested sub-tags (e.g., "work/projects")
-		const hasTag = note.tags.some(noteTag =>
-			noteTag === name || noteTag.startsWith(`${name}/`)
-		);
-
-		// Include filters require a match; exclude filters reject one
-		return exclude ? !hasTag : hasTag;
+		const hasTag = isCoveredByTags(tag, note.tags);
+		return tag.exclude ? !hasTag : hasTag;
 	});
 }
 
