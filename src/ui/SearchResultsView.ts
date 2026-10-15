@@ -149,13 +149,6 @@ export class SearchResultsView {
 
                         new Menu()
                             .addItem(item => {
-                                item.setTitle("Include")
-                                    .setIcon("squares-intersect")
-                                    .onClick(() => {
-                                        this.actions.onTagSelect(noteTag, false);
-                                    });
-                            })
-                            .addItem(item => {
                                 item.setTitle("Exclude")
                                     .setIcon("squares-exclude")
                                     .onClick(() => {

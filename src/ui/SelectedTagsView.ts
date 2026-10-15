@@ -45,12 +45,6 @@ export class SelectedTagsView {
 							.setIcon("arrow-left-right")
 							.onClick(() => { this.actions.onInvert(tag); })
 					})
-					.addItem(item => {
-						item
-							.setTitle("Remove")
-							.setIcon("x")
-							.onClick(() => { this.actions.onRemove(index); })
-					})
 					.showAtMouseEvent(event);
 			});
 
