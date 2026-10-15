@@ -26,14 +26,17 @@
     min-height: calc(var(--tag-field-row-height) + var(--size-4-2) * 2);
     
     /*
-        Base height + Padding between tags
-        * 4 such lines + gap between `selected-tags` and `input`
-        - one padding between tags,
-        because there are always 1 fewer of them than rows
+        Base height + Padding between tags * 3 such lines
+        + padding above and bellow (x2)
+        + gap between `selected-tags` and `input`
+        - one padding between tags, because there are always 1 fewer of them than rows
+        + .tag-scope-tag-input padding
     */
     max-height: calc(
-        (var(--tag-field-row-height) + var(--size-2-2))
-        * 4 + var(--size-4-2) - var(--size-2-2)
+        (var(--tag-field-row-height) + var(--size-2-2)) * 3
+        + var(--size-4-2) * 2
+        - var(--size-2-2)
+        + 1em
     );
 
     overflow-y: auto;
