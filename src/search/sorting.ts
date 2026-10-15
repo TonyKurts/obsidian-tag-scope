@@ -6,7 +6,7 @@ export function getNoteSortingRules(a: Note, b: Note) {
     return {
         tagsCount: a.tags.length - b.tags.length,
         path: getDirName(a.file.path).localeCompare(getDirName(b.file.path)),
-        name: a.file.basename.localeCompare(b.file.basename)
+        title: a.title.localeCompare(b.title)
     }
 }
 

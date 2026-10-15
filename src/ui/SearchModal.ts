@@ -317,6 +317,7 @@ export class SearchModal extends Modal {
 	private reloadData() {
 		this.notes = getAllNotes(
 			this.app,
+			this.settings.noteTitleProperty,
 			parseSettingsTags(this.settings.excludedTags),
 			parseSettingsTags(this.settings.excludedNoteTags)
 		);

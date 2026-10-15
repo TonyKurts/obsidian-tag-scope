@@ -12,6 +12,7 @@ export interface TagScopeSettings {
 	openNoteDefaultBehaviour: OpenNoteDefaultBehaviour;
 	excludedTags: string;
 	excludedNoteTags: string;
+	noteTitleProperty: string;
 }
 
 export const DEFAULT_SETTINGS: TagScopeSettings = {
@@ -19,6 +20,7 @@ export const DEFAULT_SETTINGS: TagScopeSettings = {
 	openNoteDefaultBehaviour: "currentTab",
 	excludedTags: "",
 	excludedNoteTags: "",
+	noteTitleProperty: "",
 };
 
 export function parseSettingsTags(value: string): Tag[] {
@@ -43,7 +45,8 @@ export class TagScopeSettingsTab extends PluginSettingTab {
 		await super.setControlValue(key, value);
 		if (
 			key === "excludedTags" ||
-			key === "excludedNoteTags"
+			key === "excludedNoteTags" ||
+			key === "noteTitleProperty"
 		) {
 			this.plugin.restoreSearchModal();
 		}
@@ -73,6 +76,15 @@ export class TagScopeSettingsTab extends PluginSettingTab {
 						currentTab: "Current tab",
 						newTab: "New tab"
 					},
+				},
+			},
+			{
+				name: "Note title property",
+				desc: "Use this frontmatter property as the note name in search results. Leave empty to use the file name.",
+				control: {
+					type: "text",
+					key: "noteTitleProperty",
+					placeholder: "title",
 				},
 			},
 			{

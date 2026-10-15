@@ -1,6 +1,6 @@
 import type { FilteredNote, Note, Tag, TagFilter } from "../types";
 import { Menu, setIcon } from "obsidian";
-import { highlightMatches, getDirName, className } from "../utils";
+import { highlightMatches, className } from "../utils";
 import { isTagIncluded } from "../search/tagSearch";
 import { TagPillComponent } from "./TagPillComponent";
 
@@ -73,23 +73,16 @@ export class SearchResultsView {
             const contentEl = wrapperEl.createDiv("suggestion-content");
 
             // Note name
-            const nameEl = contentEl.createDiv(className("result-name"));
-            highlightMatches(nameEl, note.name, note.matches.name);
+            const titleEl = contentEl.createDiv(className("result-title"));
+            highlightMatches(titleEl, note.title, note.matches.title);
 
             // Note path
-            //
-            // FIXME: It is relevant for the user to see only the path
-            // 		  without the file name, for accuracy, but only if
-            // 		  file name = file name, and the use frontmatter
-            //        as file header setting is not used
-            let path = note.file.path;
-            if (!note.aliasUsed) path = getDirName(note.file.path);
             const pathEl = contentEl.createDiv(className("result-path"));
-            highlightMatches(pathEl, path, note.matches.path);
+            highlightMatches(pathEl, note.displayPath, note.matches.displayPath);
 
             // Suggestion AUX for cases
             // when alias is used instead of a file name
-            if (note.aliasUsed) {
+            if (note.usesAlias) {
                 const suggestionAuxEl = wrapperEl.createDiv("suggestion-aux");
                 const aliasFlairEl = suggestionAuxEl.createSpan({
                     cls: "suggestion-flair",

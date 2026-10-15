@@ -7,6 +7,7 @@ import { getNoteSortingRules } from "./sorting";
 
 export function getAllNotes(
 	app: App,
+	titleProperty: string,
 	excludedTags: Tag[],
 	excludedNoteTags: Tag[]
 ): Note[] {
@@ -18,9 +19,27 @@ export function getAllNotes(
 			)
 		).map(file => {
 			const cache = app.metadataCache.getFileCache(file);
+			if (!cache) return null;
+
+			// Title
+			let title = file.basename;
+			let usesFrontmatterTitle = false;
+
+			titleProperty = titleProperty.trim();
+			if (titleProperty) {
+				let propertyValue: unknown = cache?.frontmatter?.[titleProperty];
+
+				if (typeof propertyValue === "string") {
+					const trimmedTitle = propertyValue.trim();
+					if (trimmedTitle) {
+						title = trimmedTitle;
+						usesFrontmatterTitle = true;
+					}
+				}
+			}
 
 			// Tags
-			const allTags = cache ? (getAllTags(cache) ?? []) : [];
+			const allTags = getAllTags(cache) ?? [];
 			const tags: Tag[] = [...new Set(allTags)]
 				.map(tag => makeTag(tag))
 				.filter(tag => tag !== null)
@@ -37,11 +56,17 @@ export function getAllNotes(
 			aliases = [...new Set(aliases)]
 				.filter(alias => alias.trim() && alias !== file.basename)
 
-			return { file, tags, aliases };
+			return {
+				file,
+				title,
+				usesFrontmatterTitle,
+				tags,
+				aliases
+			};
 		}).filter(note => note !== null)
 		.sort((a, b) => {
 			const rules = getNoteSortingRules(a, b);
-			return rules.tagsCount || rules.path || rules.name;
+			return rules.tagsCount || rules.path || rules.title;
 		});
 }
 
@@ -69,11 +94,12 @@ export function filterNotes(
 	if (!query) {
 		return notes.map(note => ({
 			...note,
-			name: note.file.basename,
-			aliasUsed: false,
+			displayPath: note.usesFrontmatterTitle ?
+				note.file.path : getDirName(note.file.path),
+			usesAlias: false,
 			matches: {
-				name: [],
-				path: []
+				title: [],
+				displayPath: []
 			},
 			score: 0,
 		}));
@@ -83,42 +109,46 @@ export function filterNotes(
 	const searches = prepareSplitFuzzySearch(query);
 	return notes
 		.flatMap(note => {
-			const path = getDirName(note.file.path);
-			let bestName: string | null = note.file.basename;
-			let aliasUsed = false;
+			let displayPath = note.usesFrontmatterTitle ?
+				note.file.path : getDirName(note.file.path);
+
+			let bestTitle: string | null = note.title;
+			let usesAlias = false;
 			
 			let bestSearch = splitFuzzySearch(searches, {
-				name: bestName,
-				path,
+				title: bestTitle,
+				displayPath,
 			});
 
 			if (!bestSearch) {
-				bestName = null;
+				bestTitle = null;
 
 				for (const alias of note.aliases) {
 					const search = splitFuzzySearch(searches, {
-						name: alias,
-						path
+						title: alias,
+						displayPath
 					});
 
 					if (!search) continue;
 					if (!bestSearch || search.score < bestSearch.score) {
-						bestName = alias;
 						bestSearch = search;
-						aliasUsed = true;
+						bestTitle = alias;
+						usesAlias = true;
 					}
 				}
 			}
 
-			if (!bestSearch || !bestName) return [];
+			if (!bestSearch || !bestTitle) return [];
+			if (usesAlias) displayPath += `${note.file.basename}.${note.file.extension}`;
 
 			return [{
 				...note,
-				name: bestName,
-				aliasUsed,
+				title: bestTitle,
+				usesAlias,
+				displayPath,
 				matches: {
-					name: bestSearch.matches.name ?? [],
-					path: bestSearch.matches.path ?? []
+					title: bestSearch.matches.title ?? [],
+					displayPath: bestSearch.matches.displayPath ?? []
 				},
 				score: bestSearch.score,
 			}];
@@ -126,6 +156,6 @@ export function filterNotes(
 		.sort((a, b) => {
 			const rules = getNoteSortingRules(a, b);
 			let score = a.score - b.score;
-			return rules.tagsCount || score  || rules.path || rules.name;
+			return rules.tagsCount || score  || rules.path || rules.title;
 		});
 }

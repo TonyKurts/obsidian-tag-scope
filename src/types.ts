@@ -17,17 +17,19 @@ export interface TagSuggestion extends Tag {
 
 export interface Note {
     file: TFile;
+    title: string;
+    usesFrontmatterTitle: boolean;
     tags: Tag[];
     aliases: string[];
 };
 
 export interface FilteredNote extends Note {
-    name: string;
-    aliasUsed: boolean;
+    displayPath: string,
+    usesAlias: boolean;
     score: number;
     matches: {
-        name: SearchMatchPart[];
-        path: SearchMatchPart[];
+        title: SearchMatchPart[];
+        displayPath: SearchMatchPart[];
     },
 };
 
