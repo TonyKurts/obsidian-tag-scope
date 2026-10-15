@@ -7,8 +7,10 @@ import { TagPillComponent } from "./TagPillComponent";
 interface SearchResultsActions {
     onRowMouseEnter(index: number): void;
     onRowMouseMove(index: number): void;
-    onOpenNote(note: Note, alternate: boolean): void;
-    onTagAdd(tag: Tag, exclude: boolean): void;
+    onNoteSelect(note: Note, alternate: boolean): void;
+    onTagSelect(tag: Tag, alternate: boolean): void;
+    canRevealFileInNav(): boolean;
+    onRevealFileInNav(note: Note): void;
 }
 
 export class SearchResultsView {
@@ -16,7 +18,7 @@ export class SearchResultsView {
 
     constructor(
         private readonly container: HTMLElement,
-        private readonly actions: SearchResultsActions
+        private readonly actions: SearchResultsActions,
     ) {}
 
     selectRow(index: number, scroll = true) {
@@ -43,6 +45,8 @@ export class SearchResultsView {
             });
         }
 
+        const canRevealFileInNav = this.actions.canRevealFileInNav();
+
         // Filtered notes list
         notes.forEach((note, index) => {
             const rowEl = this.container.createDiv({
@@ -62,13 +66,43 @@ export class SearchResultsView {
 
             // On mouse click (current tab/new tab)
             rowEl.addEventListener("click", event => {
-                this.actions.onOpenNote(
-                    note,
-                    event.ctrlKey || event.metaKey
-                );
+                if (canRevealFileInNav && event.altKey) {
+                    void this.actions.onRevealFileInNav(note);
+                    return;
+                }
+
+                this.actions.onNoteSelect(note, event.ctrlKey || event.metaKey);
             });
 
+            // Row context menu
+            rowEl.addEventListener("contextmenu", event => {
+                event.preventDefault();
 
+                const menu = new Menu();
+
+                // Open (alternate)
+                menu.addItem(item => {
+                    item.setTitle("Open (alternate)")
+                        .setIcon("file-plus")
+                        .onClick(() => {
+                            this.actions.onNoteSelect(note, true)
+                        });
+                });
+                
+                // Reveal file in navigation
+                if (canRevealFileInNav) {
+                    menu.addItem(item => {
+                        item.setTitle("Reveal file in navigation")
+                            .setIcon("folder-open")
+                            .onClick(() => {
+                                void this.actions.onRevealFileInNav(note);
+                            });
+                    })
+                }
+
+                menu.showAtMouseEvent(event);
+            })
+            
             const wrapperEl = rowEl.createDiv(className("result-wrapper"));
             const contentEl = wrapperEl.createDiv("suggestion-content");
 
@@ -105,7 +139,7 @@ export class SearchResultsView {
                     // On click (include/exclude)
                     tagPillComponent.el.addEventListener("click", event => {
                         event.stopPropagation();
-                        this.actions.onTagAdd(noteTag, event.ctrlKey || event.metaKey);
+                        this.actions.onTagSelect(noteTag, event.ctrlKey || event.metaKey);
                     });
 
                     // Context menu on right click
@@ -118,14 +152,14 @@ export class SearchResultsView {
                                 item.setTitle("Include")
                                     .setIcon("squares-intersect")
                                     .onClick(() => {
-                                        this.actions.onTagAdd(noteTag, false);
+                                        this.actions.onTagSelect(noteTag, false);
                                     });
                             })
                             .addItem(item => {
                                 item.setTitle("Exclude")
                                     .setIcon("squares-exclude")
                                     .onClick(() => {
-                                        this.actions.onTagAdd(noteTag, true);
+                                        this.actions.onTagSelect(noteTag, true);
                                     });
                             })
                             .showAtMouseEvent(event);

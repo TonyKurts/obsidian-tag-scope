@@ -27,7 +27,7 @@
     
     /*
         Base height + Padding between tags
-        * 4 such lines + padding between `selected-tags` and `input`
+        * 4 such lines + gap between `selected-tags` and `input`
         - one padding between tags,
         because there are always 1 fewer of them than rows
     */
@@ -72,6 +72,7 @@ input[type="text"].tag-scope-tag-input {
     border-radius: 0;
     box-shadow: none;
     width: 100%;
+    padding: 1em 0;
 }
 
 /* 

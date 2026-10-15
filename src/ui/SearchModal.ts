@@ -2,7 +2,7 @@ import type { FilteredNote, Note, Tag, TagFilter } from "../types";
 import { App, Modal, setIcon } from "obsidian";
 import { getAllNotes, filterNotes } from "../search/noteSearch";
 import { getTagSuggestions, isTagIncluded } from "../search/tagSearch";
-import { openNote, className, uniqueByKey } from "../utils";
+import { openNote, className, uniqueByKey, canRevealFileInNav, revealFileInNav } from "../utils";
 import { TagSuggest } from "./TagSuggest";
 import { createDebounce } from "../debounce";
 import { SearchResultsView } from "./SearchResultsView";
@@ -47,7 +47,7 @@ export class SearchModal extends Modal {
 		this.registerKeybindings();
 	}
 
-	private get currentNote(): Note | undefined {
+	private get selectedNote(): Note | undefined {
 		return this.filtered[this.selectedIndex];
 	}
 
@@ -115,6 +115,7 @@ export class SearchModal extends Modal {
 				onRowMouseEnter: (index) => {
 					if (this.enableMouseSelection) this.selectRow(index, false);
 				},
+				
 				// Enable mouse selection on move
 				onRowMouseMove: (index) => {
 					if (!this.enableMouseSelection) {
@@ -122,14 +123,23 @@ export class SearchModal extends Modal {
 						this.selectRow(index, false);
 					}
 				},
-				onOpenNote: (note, alternate) => {
-					let newTab =
-						this.settings.openNoteDefaultBehaviour === "newTab" ?
-						true : false;
-						
-					this.openNote(note, alternate ? !newTab : newTab);
+				
+				onNoteSelect: (note, alternate) => {
+					this.openNote(note, alternate);
 				},
-				onTagAdd: (tag, exclude) => { this.addTag(tag, exclude); },
+
+				onTagSelect: (tag, alternate) => {
+					this.addTag(tag, alternate);
+				},
+
+				canRevealFileInNav: () => {
+					return canRevealFileInNav(this.app);
+				},
+
+				onRevealFileInNav: (note) => {
+					void revealFileInNav(this.app, note.file);
+					this.close();
+				},
 			}
 		);
 
@@ -216,16 +226,25 @@ export class SearchModal extends Modal {
 		
 		// Open (current tab)
 		this.scope.register([], "Enter", () => {
-			if (this.currentNote) {
-				this.openNote(this.currentNote, false);
+			if (this.selectedNote) {
+				this.openNote(this.selectedNote, false);
 			}
 			return false;
 		});
 
 		// Open (new tab)
 		this.scope.register(["Mod"], "Enter", () => {
-			if (this.currentNote) {
-				this.openNote(this.currentNote, true);
+			if (this.selectedNote) {
+				this.openNote(this.selectedNote, true);
+			}
+			return false;
+		});
+
+		// Reveal file in navigation
+		this.scope.register(["Alt"], "Enter", () => {
+			if (canRevealFileInNav(this.app) && this.selectedNote?.file) {
+				void revealFileInNav(this.app, this.selectedNote.file);
+				this.close();
 			}
 			return false;
 		});
@@ -283,8 +302,16 @@ export class SearchModal extends Modal {
 		);
 	}
 
-    private openNote(note: Note, newTab: boolean = false) {
-        void openNote(this.app, note.file, newTab);
+    private openNote(note: Note, alternate: boolean = false) {
+		let newTabByDefault =
+			this.settings.openNoteDefaultBehaviour === "newTab" ? true : false;
+
+        void openNote(
+			this.app,
+			note.file,
+			alternate ? !newTabByDefault : newTabByDefault
+		);
+
         this.close();
     }
 

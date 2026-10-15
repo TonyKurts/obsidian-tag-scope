@@ -100,3 +100,20 @@ export function uniqueByKey<T extends { key: string }>(
 
 	return [...unique.values()];
 }
+
+export function canRevealFileInNav(app: App): boolean {
+    return app.workspace.getLeavesOfType("file-explorer").length > 0;
+}
+
+export async function revealFileInNav(app: App, file: TFile) {
+    const leaf = app.workspace.getLeavesOfType("file-explorer")[0];
+    if (!leaf) return;
+
+    await app.workspace.revealLeaf(leaf);
+
+    const explorer = leaf.view as {
+        revealInFolder?: (file: TFile) => void;
+    };
+
+    explorer.revealInFolder?.(file);
+}
