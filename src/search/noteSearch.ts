@@ -139,7 +139,9 @@ export function filterNotes(
 			}
 
 			if (!bestSearch || !bestTitle) return [];
-			if (usesAlias) displayPath += `${note.file.basename}.${note.file.extension}`;
+			if (usesAlias && !note.usesFrontmatterTitle) {
+				displayPath += `${note.file.basename}.${note.file.extension}`;
+			}
 
 			return [{
 				...note,

@@ -1,5 +1,5 @@
 import type { FilteredNote, Note, Tag, TagFilter } from "../types";
-import { App, Modal, setIcon } from "obsidian";
+import { App, Modal, setIcon, Editor } from "obsidian";
 import { getAllNotes, filterNotes } from "../search/noteSearch";
 import { getTagSuggestions, isTagIncluded } from "../search/tagSearch";
 import { openNote, className, uniqueByKey, canRevealFileInNav, revealFileInNav } from "../utils";
@@ -9,12 +9,17 @@ import { SearchResultsView } from "./SearchResultsView";
 import { SelectedTagsView } from "./SelectedTagsView";
 import { parseSettingsTags, TagScopeSettings } from "../settings";
 
+type SearchModalMode = 
+	| { type: "search" }
+	| { type: "insert-link"; editor: Editor; sourcePath: string };
+
 export class SearchModal extends Modal {
 	private notes: Note[] = [];
 	private filtered: FilteredNote[] = [];
 	private selectedTags: TagFilter[] = [];
 	private selectedIndex = 0;
 	private enableMouseSelection = false;
+	private mode!: SearchModalMode;
 
 	private readonly debouncedRefresh = createDebounce(
 		() => this.refreshResults()
@@ -29,8 +34,9 @@ export class SearchModal extends Modal {
 	private tagFieldEl!: HTMLElement;
 	private tagInputEl!: HTMLInputElement;
 	private fileInputEl!: HTMLInputElement;
-	private noteCounterEl!: HTMLElement;
-	private tagCounterEl!: HTMLElement;
+	private noteCounterEl!: HTMLSpanElement;
+	private tagCounterEl!: HTMLSpanElement;
+	private modeStatusEl!: HTMLSpanElement;
 
 	// Components
 	private tagSuggest!: TagSuggest;
@@ -125,8 +131,10 @@ export class SearchModal extends Modal {
 				},
 				
 				onNoteSelect: (note, alternate) => {
-					this.openNote(note, alternate);
+					this.selectNote(note, alternate);
 				},
+
+				canNoteAlternateSelect: () => this.mode.type === "search",
 
 				onTagSelect: (tag, alternate) => {
 					this.addTag(tag, alternate);
@@ -145,14 +153,20 @@ export class SearchModal extends Modal {
 
 		// Instructions & Info
 		const infoEl = this.modalEl.createDiv(className("info"));
+		const infoLeftEl = infoEl.createDiv(className("info-left"));
+		const infoRightEl = infoEl.createDiv(className("info-right"));
+
+		// Mode
+		let infoItemEl = infoLeftEl.createDiv(className("info-item"));
+		this.modeStatusEl = infoItemEl.createSpan();
 
 		// Note counter
-		let infoItemEl = infoEl.createDiv(className("info-item"));
+		infoItemEl = infoRightEl.createDiv(className("info-item"));
 		setIcon(infoItemEl, "files");
 		this.noteCounterEl = infoItemEl.createSpan();
 
 		// Tag counter
-		infoItemEl = infoEl.createDiv(className("info-item"));
+		infoItemEl = infoRightEl.createDiv(className("info-item"));
 		setIcon(infoItemEl, "tags");
 		this.tagCounterEl = infoItemEl.createSpan();
 	}
@@ -207,6 +221,12 @@ export class SearchModal extends Modal {
 
 			lastEmptyBackspaceAt = now;
 		});
+
+		// Restore default mode on mode info click
+		this.modeStatusEl.addEventListener("click", () => {
+			this.setDefaultMode();
+			this.updateModeStatus();
+		});
 	}
 
 	private registerKeybindings() {
@@ -227,7 +247,7 @@ export class SearchModal extends Modal {
 		// Open (current tab)
 		this.scope.register([], "Enter", () => {
 			if (this.selectedNote) {
-				this.openNote(this.selectedNote, false);
+				this.selectNote(this.selectedNote, false);
 			}
 			return false;
 		});
@@ -235,7 +255,7 @@ export class SearchModal extends Modal {
 		// Open (new tab)
 		this.scope.register(["Mod"], "Enter", () => {
 			if (this.selectedNote) {
-				this.openNote(this.selectedNote, true);
+				this.selectNote(this.selectedNote, true);
 			}
 			return false;
 		});
@@ -302,7 +322,7 @@ export class SearchModal extends Modal {
 		);
 	}
 
-    private openNote(note: Note, alternate: boolean = false) {
+    private openNote(note: Note, alternate = false) {
 		let newTabByDefault =
 			this.settings.openNoteDefaultBehaviour === "newTab" ? true : false;
 
@@ -314,6 +334,33 @@ export class SearchModal extends Modal {
 
         this.close();
     }
+
+	private selectNote(note: Note, alternate = false) {
+		if (this.mode.type === "insert-link") {
+			this.insertLink(note);
+			return;
+		}
+
+		this.openNote(note, alternate);		
+	}
+
+	private insertLink(note: Note) {
+		if (this.mode.type !== "insert-link") return;
+
+		const { editor, sourcePath } = this.mode;
+		const selection = editor.getSelection().trim();
+		const alias = selection ? selection : note.title;
+
+		const link = this.app.fileManager.generateMarkdownLink(
+			note.file,
+			sourcePath,
+			undefined,
+			alias
+		);
+
+		editor.replaceSelection(link);
+		this.close();
+	}
 
 	private refreshResults() {
 		this.selectedIndex = 0;
@@ -330,7 +377,12 @@ export class SearchModal extends Modal {
 		this.moveSelection();
 	}
 
-	private updateCounters(): void {
+	private updateModeStatus() {
+		this.modeStatusEl.innerText =
+			this.mode.type === "insert-link" ? "Link insertion" : "";
+	}
+
+	private updateCounters() {
 		const availableTags = uniqueByKey(
 			this.filtered.flatMap(note => 
 				note.tags.filter(tag => !isTagIncluded(tag, this.selectedTags))
@@ -353,9 +405,25 @@ export class SearchModal extends Modal {
 	private restore() {
 		this.selectedTags = [];
 		this.fileInputEl.value = "";
+		
+		this.updateModeStatus();
 		this.updateTagsView();
 		this.reloadData();
 		this.refreshResults();
+	}
+
+	private setDefaultMode() {
+		this.mode = { type: "search" };
+	}
+
+	openSearch() {
+		this.setDefaultMode();
+		this.open();
+	}
+
+	openForLinkInsertion(editor: Editor, sourcePath: string) {
+		this.mode = { type: "insert-link", editor, sourcePath };
+		this.open();
 	}
 
 	onOpen() {

@@ -91,6 +91,13 @@ input[type="text"].tag-scope-tag-input {
     font-size: var(--font-ui-smaller);
     border-top: var(--border-width) solid var(--background-secondary);
     display: flex;
+    justify-content: space-between;
+    gap: var(--size-4-8);
+}
+
+.tag-scope-info-left,
+.tag-scope-info-right {
+    display: flex;
     justify-content: end;
     gap: var(--size-4-3);
 }

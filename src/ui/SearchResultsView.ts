@@ -8,6 +8,7 @@ interface SearchResultsActions {
     onRowMouseEnter(index: number): void;
     onRowMouseMove(index: number): void;
     onNoteSelect(note: Note, alternate: boolean): void;
+    canNoteAlternateSelect(): boolean;
     onTagSelect(tag: Tag, alternate: boolean): void;
     canRevealFileInNav(): boolean;
     onRevealFileInNav(note: Note): void;
@@ -80,14 +81,14 @@ export class SearchResultsView {
 
                 const menu = new Menu();
 
-                // Open (alternate)
-                menu.addItem(item => {
-                    item.setTitle("Open (alternate)")
-                        .setIcon("file-plus")
-                        .onClick(() => {
-                            this.actions.onNoteSelect(note, true)
-                        });
-                });
+                // Select (alternate)
+                if (this.actions.canNoteAlternateSelect()) {
+                    menu.addItem(item => {
+                        item.setTitle("Select (alternate)")
+                            .setIcon("file-plus")
+                            .onClick(() => this.actions.onNoteSelect(note, true));
+                    });
+                }
                 
                 // Reveal file in navigation
                 if (canRevealFileInNav) {

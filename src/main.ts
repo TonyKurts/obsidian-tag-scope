@@ -12,17 +12,29 @@ export default class TagScopePlugin extends Plugin {
         
         this.searchModal = new SearchModal(this.app, this.settings);
 
+        // Search mode
         this.addCommand({
             id: "open-search",
             name: "Open search",
-            callback: () => { this.searchModal?.open(); }
+            callback: () => { this.searchModal?.openSearch(); }
         });
 
         this.addRibbonIcon(
             "squares-intersect",
             "Open search by tags",
-            () => { this.searchModal?.open(); }
+            () => { this.searchModal?.openSearch(); }
         );
+
+        // Link insertion mode
+        this.addCommand({
+            id: "insert-link",
+            name: "Insert link",
+            editorCallback: (editor, ctx) => {
+                const file = ctx.file;
+                if (!file) return;
+                this.searchModal?.openForLinkInsertion(editor, file.path)
+            }
+        });
     }
 
     restoreSearchModal() {
