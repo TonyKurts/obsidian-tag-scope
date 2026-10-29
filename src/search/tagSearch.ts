@@ -11,19 +11,24 @@ export function isTagIncluded(
 	return items.some(item => tag.key === item.key);
 }
 
-// A candidate tag is covered when it is selected directly,
-// or based on mode: when a more specific nested sub-tag is selected (subtags),
-// or when a broader parent tag is already selected (parents).
-export function isCoveredByTags(
-	tag: Tag,
-	items: Tag[],
-	includeSubtags = true
-): boolean {
-	return items.some(item => {
-		return includeSubtags
-            ? (tag.key === item.key || item.key.startsWith(`${tag.key}/`)) 
-            : (tag.key === item.key || tag.key.startsWith(`${item.key}/`));
-	});
+// Checks whether the list contains the tag itself or any tag nested beneath it.
+// For example, `color` matches `color` and `color/green`, but not `colorful`.
+// Use this when a parent tag should also match notes tagged with its subtags.
+export function hasTagOrSubtag(tag: Tag, tags: Tag[]): boolean {
+	return tags.some(item =>
+		item.key === tag.key ||
+		item.key.startsWith(`${tag.key}/`)
+	);
+}
+
+// Checks whether the tag itself matches, or is nested beneath, any tag in the list.
+// For example, `color/green` matches `color` and `color/green`, but not `colorful`.
+// Use this when a listed parent tag should cover all tags in its sub-tree.
+export function isTagOrSubtagOfAny(tag: Tag, tags: Tag[]): boolean {
+	return tags.some(item =>
+		tag.key === item.key ||
+		tag.key.startsWith(`${item.key}/`)
+	);
 }
 
 // Returns a tag and all its parent tags.
@@ -63,7 +68,7 @@ export function getTagSuggestions(
 		);
 
 		for (const noteTag of noteTags) {
-			if (isCoveredByTags(noteTag, selected)) continue;
+			if (hasTagOrSubtag(noteTag, selected)) continue;
 			const current = counts.get(noteTag.key);
 			counts.set(noteTag.key, {
 				tag: current?.tag ?? noteTag,

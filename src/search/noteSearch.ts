@@ -2,7 +2,7 @@ import { Note, FilteredNote, TagFilter, Tag, makeTag } from "../types";
 import { App, getAllTags, parseFrontMatterAliases } from "obsidian";
 import { getDirName, getObsidianIgnoreFilters } from "../utils";
 import { prepareSplitFuzzySearch, splitFuzzySearch } from "./fuzzySearch";
-import { isCoveredByTags } from "./tagSearch";
+import { hasTagOrSubtag, isTagOrSubtagOfAny } from "./tagSearch";
 import { getNoteSortingRules } from "./sorting";
 
 export function getAllNotes(
@@ -43,11 +43,11 @@ export function getAllNotes(
 			const tags: Tag[] = [...new Set(allTags)]
 				.map(tag => makeTag(tag))
 				.filter(tag => tag !== null)
-				.filter(tag => !isCoveredByTags(tag, excludedTags, false))
+				.filter(tag => !isTagOrSubtagOfAny(tag, excludedTags))
 				.sort((tagA, tagB) => tagA.key.localeCompare(tagB.key));
 
 			// Exclude note by tag
-			if (tags.some(tag => isCoveredByTags(tag, excludedNoteTags, false))) {
+			if (tags.some(tag => isTagOrSubtagOfAny(tag, excludedNoteTags))) {
 				return null;
 			}
 
@@ -75,7 +75,7 @@ function matchesTagFilters(note: Note, filters: TagFilter[]): boolean {
 	return filters.every(tag => {
 		// Check if the note has the specified tag
 		// or any of its nested sub-tags (e.g., "work/projects")
-		const hasTag = isCoveredByTags(tag, note.tags);
+		const hasTag = hasTagOrSubtag(tag, note.tags);
 		return tag.exclude ? !hasTag : hasTag;
 	});
 }

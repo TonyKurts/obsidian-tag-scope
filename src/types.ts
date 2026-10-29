@@ -35,6 +35,7 @@ export interface FilteredNote extends Note {
 
 export function makeTag(value: string): Tag | null {
     value = value.replaceAll("#", "").trim();
+    value = value.replace(/^\/+|\/+$/g, '');
 
     if (value) {
         return {

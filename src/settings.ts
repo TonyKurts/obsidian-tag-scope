@@ -24,13 +24,16 @@ export const DEFAULT_SETTINGS: TagScopeSettings = {
 };
 
 export function parseSettingsTags(value: string): Tag[] {
-	return [
-		...new Set(
-			value
-				.split(/\r?\n/)
-				.map(tag => makeTag(tag))
-		)
-	].filter(tag => tag !== null);
+	const unique = new Map<string, Tag>();
+
+	for (const line of value.split(/\r?\n/)) {
+		const tag = makeTag(line);
+		if (tag && !unique.has(tag.key)) {
+			unique.set(tag.key, tag);
+		}
+	}
+
+	return [...unique.values()];
 }
 
 export class TagScopeSettingsTab extends PluginSettingTab {
