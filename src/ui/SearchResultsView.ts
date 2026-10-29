@@ -84,7 +84,7 @@ export class SearchResultsView {
                 // Select (alternate)
                 if (this.actions.canNoteAlternateSelect()) {
                     menu.addItem(item => {
-                        item.setTitle("Select (alternate)")
+                        item.setTitle("Open (alternate)")
                             .setIcon("file-plus")
                             .onClick(() => this.actions.onNoteSelect(note, true));
                     });

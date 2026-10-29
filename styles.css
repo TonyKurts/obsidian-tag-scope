@@ -4,53 +4,82 @@
 #
 */
 
-.tag-scope-tag-field {
-    /* Basic size of field without indentation */
-    --tag-field-row-height: calc(
-        var(--input-height) +
-        var(--border-width)
-    );
+.tag-scope-input-container {
     --search-clear-button-size: 17px;
+    --padding-x-size: var(--size-4-6);
+    --padding-y-size: var(--size-4-4);
+    
+    display: flex;
+    position: relative;
+    border-bottom: var(--border-width) solid var(--background-secondary);
+    padding: var(--padding-y-size) var(--padding-x-size);
+    background-color: transparent;
+    gap: var(--size-4-2);
+}
+
+.is-mobile .tag-scope-input-container {
+    --padding-x-size: var(--size-4-4);
+    --padding-y-size: var(--size-4-4);
+}
+
+.is-phone .tag-scope-input-container {
+    border: var(--border-width) solid var(--background-modifier-border);
+    border-radius: var(--radius-l);
+    background: var(--raised, var(--raised-background))
+}
+
+.tag-scope-input-container .search-input-clear-button {
+    position: relative;
+    height: auto;
+    width: auto;
+    top: auto;
+    bottom: auto;
+    margin: 0;
+    inset-inline-end: 0;
+}
+
+input[type="text"].tag-scope-input {
+    font-size: var(--font-ui-medium);
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+    padding: 0;    
+    width: 100%;
+    height: auto;
+}
+
+.tag-scope-tag-field {
+    --input-row-height: calc(var(--font-ui-medium));
+    --tag-row-height: calc(
+        max(var(--font-ui-medium), var(--icon-xs))
+        + var(--pill-padding-y) * 2
+    );
 
     /* May become larger and take up more space */
     flex: 0 0 auto;
     position: relative;
-
-    display: flex;
     flex-direction: column;
 
-    /* Gap between `selected-tags` and `input` */
-    gap: var(--size-4-2);
-    
-    /* Base height + padding above and below */
-    min-height: calc(var(--tag-field-row-height) + var(--size-4-2) * 2);
-    
-    /*
-        Base height + Padding between tags * 3 such lines
-        + padding above and bellow (x2)
-        + gap between `selected-tags` and `input`
-        - one padding between tags, because there are always 1 fewer of them than rows
-        + .tag-scope-tag-input padding
-    */
     max-height: calc(
-        (var(--tag-field-row-height) + var(--size-2-2)) * 3
-        + var(--size-4-2) * 2
-        - var(--size-2-2)
-        + 1em
+        var(--padding-y-size) * 2
+        + (var(--tag-row-height) * 2)
+        + var(--size-2-2)
+        + var(--size-4-2)
+        + 1.25em
+        + var(--border-width)
     );
 
     overflow-y: auto;
     overflow-x: hidden;
+}
 
-    /* Properties to be visually the same as `.prompt-input` */
-    padding: var(--size-4-2) var(--size-4-6);
-
-    background-color: transparent;
-    font-size: var(--font-ui-medium);
-
-    border: none;
-    border-radius: 0;
-    border-bottom: var(--border-width) solid var(--background-secondary);
+.is-phone .tag-scope-fields {
+    order: 1;
+    margin: auto var(--size-4-2) 0;;
+    display: flex;
+    flex-direction: column;
+    gap: var(--size-4-2);
 }
 
 .tag-scope-selected-tags {
@@ -61,21 +90,6 @@
     &:empty {
         display: none;
     }
-}
-
-/*
-    The input field should become one with `.tag-scope-tag-field`,
-    so we remove all out-of-step properties
-*/
-input[type="text"].tag-scope-tag-input {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: inherit;
-    border-radius: 0;
-    box-shadow: none;
-    width: 100%;
-    padding: 1em 0;
 }
 
 /* 
@@ -95,6 +109,10 @@ input[type="text"].tag-scope-tag-input {
     gap: var(--size-4-8);
 }
 
+.is-phone .tag-scope-info {
+    border-top: none;
+}
+
 .tag-scope-info-left,
 .tag-scope-info-right {
     display: flex;
@@ -106,6 +124,12 @@ input[type="text"].tag-scope-tag-input {
     display: flex;
     align-items: center;
     gap: var(--size-2-2);
+}
+
+.is-phone .tag-scope-info {
+    order: 2;
+    border-top: none;
+    padding-bottom: 0;
 }
 
 /* 
@@ -158,6 +182,10 @@ input[type="text"].tag-scope-tag-input {
 .tag-scope-result {
     flex-direction: column;
     padding: var(--size-4-3);
+}
+
+.is-mobile .tag-scope-result {
+    border-radius: var(--radius-l);
 }
 
 .tag-scope-result-wrapper {
@@ -218,6 +246,7 @@ input[type="text"].tag-scope-tag-input {
 # Highlights
 #
 */
+
 .tag-scope-highlight {
     text-decoration: underline;
     font-weight: bolder;

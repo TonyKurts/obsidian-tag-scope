@@ -1,5 +1,5 @@
 import type { FilteredNote, Note, Tag, TagFilter } from "../types";
-import { App, Modal, setIcon, Editor } from "obsidian";
+import { App, Modal, setIcon, Editor, Platform } from "obsidian";
 import { getAllNotes, filterNotes } from "../search/noteSearch";
 import { getTagSuggestions, isTagIncluded } from "../search/tagSearch";
 import { openNote, className, uniqueByKey, canRevealFileInNav, revealFileInNav } from "../utils";
@@ -62,14 +62,23 @@ export class SearchModal extends Modal {
 		this.modalEl.empty();
 		this.modalEl.removeClass("modal");
 		this.modalEl.addClass("prompt");
+		this.modalEl.classList.toggle("is-mobile", Platform.isMobile);
+		this.modalEl.classList.toggle("is-phone", Platform.isPhone);
+
+		const fieldsEl = this.modalEl.createDiv(className("fields"));
 
 		// File input
-		const fileFieldEl = this.modalEl.createDiv("prompt-input-container");
+		const fileFieldEl = fieldsEl.createDiv({
+			cls: [
+				className("input-container"),
+				className("file-field")
+			]
+		});
 		this.fileInputEl = fileFieldEl.createEl("input", {
 			type: "text",
 			cls: [
-				className("file-input"),
-				"prompt-input"
+				className("input"),
+				className("file-input")
 			],
 			placeholder: "Find by filename or path...",
 			attr: {
@@ -83,7 +92,13 @@ export class SearchModal extends Modal {
 		this.closeBtnEl = fileFieldEl.createDiv("search-input-clear-button");
 
 		// Tag input
-		this.tagFieldEl = this.modalEl.createDiv(className("tag-field"));
+		this.tagFieldEl = fieldsEl.createDiv({
+			cls: [
+				className("input-container"),
+				className("tag-field")
+			]
+		});
+
 		this.selectedTagsView = new SelectedTagsView(
 			this.tagFieldEl.createDiv(className("selected-tags")),
 			{
@@ -94,7 +109,10 @@ export class SearchModal extends Modal {
 
 		this.tagInputEl = this.tagFieldEl.createEl("input", {
 			type: "text",
-			cls: className("tag-input"),
+			cls: [
+				className("input"),
+				className("tag-input")
+			],
 			placeholder: "Narrow by tags...",
 			attr: {
 				autocapitalize: "off",
@@ -379,7 +397,7 @@ export class SearchModal extends Modal {
 
 	private updateModeStatus() {
 		this.modeStatusEl.innerText =
-			this.mode.type === "insert-link" ? "Link insertion" : "";
+			this.mode.type === "insert-link" ? "Mode: Link insertion" : "";
 	}
 
 	private updateCounters() {
