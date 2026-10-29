@@ -290,7 +290,7 @@ export class SearchModal extends Modal {
 
 	private invertTag(tag: TagFilter) {
 		tag.exclude = !tag.exclude;
-		this.updateTagsView();
+		this.updateTagsView(false);
 		this.refreshResults();
 	}
 
@@ -312,15 +312,18 @@ export class SearchModal extends Modal {
 		if (this.selectedTags.length === 0) return;
 		if (index == null) this.selectedTags.pop();
 		else this.selectedTags.splice(index, 1);
-		this.updateTagsView();
+		this.updateTagsView(false);
 		this.refreshResults();
 	}
 
-	private updateTagsView() {
+	private updateTagsView(scroll = true) {
 		this.tagSuggest.close();
 		this.tagSuggest.setValue("");
 		this.selectedTagsView.render(this.selectedTags);
-		this.tagFieldEl.scrollTop = this.tagFieldEl.scrollHeight;
+
+		if (scroll) {
+			this.tagFieldEl.scrollTop = this.tagFieldEl.scrollHeight;
+		}
 	}
 
 	// Set highlight to selected row
