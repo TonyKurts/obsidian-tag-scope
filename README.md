@@ -1,11 +1,13 @@
 # Tag Scope for Obsidian
 
-Tag Scope helps you find notes by narrowing your vault with tags, then refining the results by note name, path, alias, or a frontmatter title. It searches Markdown notes and supports desktop and mobile Obsidian.
+Tag Scope helps you find notes by narrowing your vault with tags, then refining the results by note name, path, alias, or a frontmatter title.
+
+![Tag Scope Obsidian Plugin Demo](./assets/demo.webp)
 
 ## Features
 
 - **Progressive tag filtering.** Include several tags to narrow the results. Selecting a parent tag also matches notes with tags nested beneath it, such as selecting `work` to match `work/projects`. Exclude tags to remove matching notes from the current result set.
-- **Relevant tag suggestions.** Suggestions come from the notes currently in the results and show how many of those notes use each tag. Nested tag suggestions are grouped to avoid showing unnecessary parent levels. Fuzzy matching highlights matching text.
+- **Relevant tag suggestions (faceted search).** Suggestions come from the notes currently in the results and show how many of those notes use each tag. Nested tag suggestions are grouped to avoid showing unnecessary parent levels. Fuzzy matching highlights matching text.
 - **Search by note name and path.** Search results prioritize notes with fewer tags, then better fuzzy matches; path and title break ties.
 - **Alias support.** Search by frontmatter aliases as well as note names. Results identify when the displayed title comes from an alias.
 - **Frontmatter titles.** Choose a frontmatter property, such as `title`, to use its string value as the note title in results and searches.
@@ -18,22 +20,29 @@ Tag Scope helps you find notes by narrowing your vault with tags, then refining 
 
 To start a search, run **Open search** from the command palette or select **Open search by tags** in the ribbon. To insert a link, place the cursor in an editor and run **Insert link**.
 
-## Keyboard shortcuts
+## Keyboard shortcuts and interactions
 
-| Shortcut | Action |
+### Navigation
+
+| Shortcut or interaction | Action |
 | --- | --- |
-| `↑` / `↓` | Move through the search results. |
-| `Enter` | Open the selected note using the configured default behavior. In link insertion mode, insert the selected note as a link. |
-| `Ctrl/Cmd + Enter` | Use the alternate opening behavior. In link insertion mode, insert the selected note as a link. |
-| `Ctrl/Cmd + Click` a result | Use the alternate opening behavior. |
-| `Alt + Enter` or `Alt + Click` a result | Reveal the selected note in File Explorer, when the File Explorer is open. |
 | `Tab` | Switch between the tag and note search fields. |
-| `Backspace` twice in an empty tag field | Remove the last selected tag. |
-| Start a tag query with `!` | Add the selected suggestion as an excluded tag. |
-| `Ctrl + Enter` on a tag suggestion | Add the selected suggestion as an excluded tag. |
-| `Ctrl/Cmd + Click` a tag suggestion or a tag on a result | Add the tag as an excluded filter. |
-| Click a selected tag | Remove it from the search. |
+| `↑/↓` | Move through search results. |
+| `Enter/Click` a result | Open it using the configured default behavior; Insert a link to that note in the current editor. |
+| `Ctrl/Cmd + Enter/Click` a result | Use the alternate opening behavior; Also insert the link. |
+| `Alt + Enter/Click` a result | Reveal the note in File Explorer, when the File Explorer is open. |
+| `Click` a tag shown a result | Add that tag as an included filter. |
+| `Ctrl/Cmd + Click` a tag shown on a result | Add that tag as an excluded filter. |
+| `Enter/Click` a tag suggestion | Add the selected tag as an included filter. |
+| `Ctrl/Cmd + Enter/Click` a tag suggestion | Add the selected suggestion as an excluded filter. |
+| Start a tag query with `!` | Add the selected suggestion as an excluded filter. |
 | `Ctrl/Cmd + Click` a selected tag | Invert it between included and excluded. |
+| `Click` a selected tag | Remove it from the search. |
+| `Backspace` twice while the tag field is empty | Remove the last selected tag. |
+| Select the mode indicator at the bottom of the modal | Return to normal search mode. |
+
+- Selected tags, search results and their tags have context menus.
+- If text is selected in the editor when link insertion mode opens, that text is used as the link alias.
 
 ## Settings
 
