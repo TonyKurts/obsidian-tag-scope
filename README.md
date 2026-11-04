@@ -6,7 +6,7 @@ Language: [EN](./README.md), [RU](./README.ru.md)
 
 ![Tag Scope plugin for Obsidian demo](./assets/demo.webp)
 
-**Tag Scope** gradually narrows the set of notes using tags, then refines the search by note name, path, aliases (`aliases`), and a frontmatter title property (such as `title`).
+**Tag Scope** gradually narrows the set of notes using tags, then refines the search by note name, path, aliases, and a frontmatter title property (such as `title`).
 
 Search supports fuzzy matching. The interface has a minimal, native Obsidian look, adapts to mobile devices, and supports keyboard use for the main actions.
 
@@ -34,7 +34,7 @@ Suppose you are looking for a note containing the minutes of a work meeting. Not
 1. Run **Open search**, enter `work` in the tag field, and select the suggestion. The results will include notes with this tag and its nested tags.
 2. Suggestions update to reflect the remaining notes. Enter `meeting` and select the suggestion to keep notes that have both tags.
 3. To exclude canceled meetings, for example, enter `!status/canceled` in the tag field and select the suggestion. Notes with this tag will be removed from the current result set.
-4. Enter part of a note name, path, `alias`, or `title` property value in the note search field to refine the results.
+4. Enter part of a note name, path, alias, or title property value in the note search field to refine the results.
 5. Select a result with the arrow keys and press `Enter` to open the note using the default behavior.
 
 ## Keyboard shortcuts and interactions
@@ -62,6 +62,6 @@ Suppose you are looking for a note containing the minutes of a work meeting. Not
 
 - **Tag suggestion sort order.** Choose how equally relevant tag suggestions are sorted: by name or by usage count in the current result set.
 - **Default note opening behavior.** Choose whether to open notes in the current tab or a new tab. The alternate action uses the other behavior.
-- **Note title property.** Enter a frontmatter property name, such as `title`, to use its string value as the note title. Leave it empty to use the filename.
+- **Note title property.** Enter a frontmatter property name, such as title, to use its string value as the note title. Leave it empty to use the filename.
 - **Exclude tags from search.** These tags and their nested tags are excluded from search and suggestions, but notes containing them remain visible.
 - **Exclude notes from search by tag.** Notes with these tags or their nested tags are excluded from search results.
