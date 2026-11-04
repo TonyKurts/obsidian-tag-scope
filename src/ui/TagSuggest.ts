@@ -26,7 +26,7 @@ export class TagSuggest extends AbstractInputSuggest<TagSuggestion> {
         });
 
         // Ctrl + Enter = Add exclude tag
-        this.scope.register(["Ctrl"], "Enter", () => {
+        this.scope.register(["Mod"], "Enter", () => {
             const selected = this.getSelected();
             if (!selected) return false;
 
